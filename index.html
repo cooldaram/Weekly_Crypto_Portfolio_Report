@@ -44,17 +44,15 @@
       font-size: 14px;
       font-weight: 400;
       line-height: 1.5;
-      overflow: hidden; /* 스크롤 완전히 차단 */
+      overflow: hidden; /* 외부 스크롤 방지 */
       height: 100%;
-      position: fixed; /* 외부 스크롤 방지 */
-      width: 100%; /* 전체 너비 차지 */
     }
     
     #root {
       display: flex;
       justify-content: center;
       padding: 0;
-      height: 100%; /* 전체 높이로 변경 */
+      height: 100%;
       width: 100%;
       overflow: hidden;
     }
@@ -489,7 +487,7 @@
       }
     ];
     
-    // Main App component - 완전히 다시 작성합니다.
+    // Main App component
     const App = () => {
       // 메시지 리스트와 대화 완료 상태만 관리
       const [messages, setMessages] = useState([]);
@@ -501,76 +499,20 @@
       const messagesEndRef = useRef(null);
       const messageContainerRef = useRef(null);
       
-      // 스크롤 이벤트가 부모로 전파되지 않도록 처리
-      useEffect(() => {
-        const preventScroll = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        };
-        
-        // 전체 문서에 대한 스크롤 방지
-        document.addEventListener('wheel', preventScroll, { passive: false });
-        document.addEventListener('touchmove', preventScroll, { passive: false });
-        
-        // 채팅 컨테이너에는 스크롤 허용
-        const handleContainerScroll = (e) => {
-          // 컨테이너 내부에서만 스크롤 허용
-          e.stopPropagation();
-          // 스크롤이 끝에 도달했을 때만 기본 이벤트 방지
-          if (
-            (e.deltaY > 0 && messageContainerRef.current.scrollTop + messageContainerRef.current.clientHeight >= messageContainerRef.current.scrollHeight) ||
-            (e.deltaY < 0 && messageContainerRef.current.scrollTop <= 0)
-          ) {
-            e.preventDefault();
-          }
-        };
-        
-        const container = messageContainerRef.current;
-        if (container) {
-          container.addEventListener('wheel', handleContainerScroll, { passive: false });
-          container.addEventListener('touchmove', handleContainerScroll, { passive: false });
-        }
-        
-        return () => {
-          document.removeEventListener('wheel', preventScroll);
-          document.removeEventListener('touchmove', preventScroll);
-          if (container) {
-            container.removeEventListener('wheel', handleContainerScroll);
-            container.removeEventListener('touchmove', handleContainerScroll);
-          }
-        };
-      }, []);
-      
-      // 자동 스크롤 함수 - 모든 새 메시지에 작동하도록 수정
-      const scrollToBottom = (force = false) => {
-        if (messagesEndRef.current && messageContainerRef.current) {
-          // 모든 새 메시지에 대해 스크롤 실행
-          messagesEndRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-            inline: 'nearest'
+      // 간단한 자동 스크롤 함수
+      const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end' 
           });
         }
       };
       
-      // 메시지가 추가될 때 스크롤 - 모든 메시지에 대해 실행
+      // 메시지가 추가될 때마다 자동 스크롤
       useEffect(() => {
-        if (messages.length > 0) {
-          // 약간의 지연 후 스크롤 실행 (DOM 업데이트 후)
-          setTimeout(() => {
-            scrollToBottom(true);
-          }, 100);
-        }
-      }, [messages]);
-      
-      // 타이핑 표시기가 나타날 때도 스크롤
-      useEffect(() => {
-        if (isTyping) {
-          setTimeout(() => {
-            scrollToBottom(true);
-          }, 50);
-        }
-      }, [isTyping]);
+        setTimeout(scrollToBottom, 100);
+      }, [messages, isTyping]);
       
       // 처음 화면이 로드될 때 상태 초기화
       useEffect(() => {
@@ -608,8 +550,6 @@
         // 타이핑 표시기 활성화
         setTimeout(() => {
           setIsTyping(true);
-          // 스크롤 다운 - 여기서 명시적으로 호출
-          scrollToBottom(true);
         }, 500);
         
         // 응답 처리 시작
@@ -640,7 +580,7 @@
           
           // 모든 처리가 끝난 후 스크롤 실행
           setTimeout(() => {
-            scrollToBottom(true);
+            scrollToBottom();
           }, 300);
           
           return;
@@ -653,14 +593,14 @@
           
           // 메시지 추가 후 스크롤 실행
           setTimeout(() => {
-            scrollToBottom(true);
+            scrollToBottom();
           }, 100);
           
           // 다음 응답 전에 타이핑 표시기 활성화 (마지막 응답이 아닌 경우)
           if (responseIndex + 1 < responses.length) {
             setTimeout(() => {
               setIsTyping(true);
-              scrollToBottom(true);
+              scrollToBottom();
             }, 700); // 이전 메시지가 표시된 후 약간 기다렸다가 로딩 표시
             
             setTimeout(() => {
@@ -696,7 +636,7 @@
           padding: '0',
           display: 'flex',
           flexDirection: 'column',
-          height: '100%', /* 100vh 대신 100% 사용 */
+          height: '100%',
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -715,10 +655,6 @@
               scrollbarColor: 'var(--secondary-bg) transparent',
               position: 'relative',
               WebkitOverflowScrolling: 'touch' // iOS 부드러운 스크롤
-            }}
-            onScroll={(e) => {
-              // 스크롤 이벤트가 부모로 전파되지 않도록 함
-              e.stopPropagation();
             }}
           >
             {messages.map((message, index) => {
