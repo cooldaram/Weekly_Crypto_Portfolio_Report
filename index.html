@@ -541,33 +541,36 @@
         };
       }, []);
       
-      // 자동 스크롤 함수 - 사용자 입력 후에만 호출되도록 수정
+      // 자동 스크롤 함수 - 모든 새 메시지에 작동하도록 수정
       const scrollToBottom = (force = false) => {
         if (messagesEndRef.current && messageContainerRef.current) {
-          // 마지막 메시지가 사용자 메시지인 경우 또는 force가 true인 경우에만 스크롤
-          const lastMessage = messages[messages.length - 1];
-          if (force || (lastMessage && lastMessage.type === 'user')) {
-            messagesEndRef.current.scrollIntoView({
-              behavior: 'smooth',
-              block: 'end',
-              inline: 'nearest'
-            });
-          }
+          // 모든 새 메시지에 대해 스크롤 실행
+          messagesEndRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+            inline: 'nearest'
+          });
         }
       };
       
-      // 메시지가 추가될 때 스크롤 - 제한적으로 실행
+      // 메시지가 추가될 때 스크롤 - 모든 메시지에 대해 실행
       useEffect(() => {
         if (messages.length > 0) {
-          const lastMessage = messages[messages.length - 1];
-          // 마지막 메시지가 사용자 메시지인 경우에만 자동 스크롤
-          if (lastMessage && lastMessage.type === 'user') {
-            setTimeout(() => {
-              scrollToBottom(true);
-            }, 100);
-          }
+          // 약간의 지연 후 스크롤 실행 (DOM 업데이트 후)
+          setTimeout(() => {
+            scrollToBottom(true);
+          }, 100);
         }
       }, [messages]);
+      
+      // 타이핑 표시기가 나타날 때도 스크롤
+      useEffect(() => {
+        if (isTyping) {
+          setTimeout(() => {
+            scrollToBottom(true);
+          }, 50);
+        }
+      }, [isTyping]);
       
       // 처음 화면이 로드될 때 상태 초기화
       useEffect(() => {
@@ -605,8 +608,8 @@
         // 타이핑 표시기 활성화
         setTimeout(() => {
           setIsTyping(true);
-          // 스크롤 다운
-          scrollToBottom();
+          // 스크롤 다운 - 여기서 명시적으로 호출
+          scrollToBottom(true);
         }, 500);
         
         // 응답 처리 시작
@@ -634,6 +637,12 @@
             // 모든 시나리오 완료
             setIsCompleted(true);
           }
+          
+          // 모든 처리가 끝난 후 스크롤 실행
+          setTimeout(() => {
+            scrollToBottom(true);
+          }, 300);
+          
           return;
         }
         
@@ -642,23 +651,28 @@
           const response = responses[responseIndex];
           setMessages(prev => [...prev, response]);
           
+          // 메시지 추가 후 스크롤 실행
+          setTimeout(() => {
+            scrollToBottom(true);
+          }, 100);
+          
           // 다음 응답 전에 타이핑 표시기 활성화 (마지막 응답이 아닌 경우)
           if (responseIndex + 1 < responses.length) {
             setTimeout(() => {
               setIsTyping(true);
-              scrollToBottom();
+              scrollToBottom(true);
             }, 700); // 이전 메시지가 표시된 후 약간 기다렸다가 로딩 표시
             
             setTimeout(() => {
               setIsTyping(false);
               // 다음 응답 처리
               processResponses(responses, responseIndex + 1, scenarioIndex);
-            }, 2000); // 로딩 표시가 좀 더 자연스럽게 보이도록 타이밍 조정
+            }, 1800); // 로딩 표시가 좀 더 자연스럽게 보이도록 타이밍 조정
           } else {
             // 마지막 응답이면 바로 다음 처리
             processResponses(responses, responseIndex + 1, scenarioIndex);
           }
-        }, 800); // 메시지 표시 간격 조정
+        }, 1800); // 메시지 표시 간격 조정 (1200에서 1800으로 수정)
       };
       
       // 대화 재설정
