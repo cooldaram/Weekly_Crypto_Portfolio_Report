@@ -595,6 +595,7 @@
                     useState(-1);
                 const [isAimoResponding, setIsAimoResponding] = useState(false);
                 const [userInput, setUserInput] = useState("");
+                const [isCompleted, setIsCompleted] = useState(false);
                 const messagesEndRef = useRef(null);
                 const messageContainerRef = useRef(null);
 
@@ -606,13 +607,27 @@
                     if (messagesEndRef.current) {
                         messagesEndRef.current.scrollIntoView({
                             behavior: "smooth",
+                            block: "end",
                         });
+
+                        // 추가 스크롤 처리를 위한 타임아웃
+                        setTimeout(() => {
+                            window.scrollTo({
+                                top: document.body.scrollHeight,
+                                behavior: "smooth",
+                            });
+                        }, 100);
                     }
                 };
 
                 // 메시지가 추가될 때마다 스크롤
                 useEffect(() => {
-                    scrollToBottom();
+                    // 약간의 지연 후 스크롤하여 DOM이 업데이트될 시간을 줌
+                    const scrollTimer = setTimeout(() => {
+                        scrollToBottom();
+                    }, 50);
+
+                    return () => clearTimeout(scrollTimer);
                 }, [displayedMessages]);
 
                 // 사용자 메시지 처리
@@ -633,6 +648,16 @@
                     setIsAimoResponding(true);
                     setCurrentAimoResponseIndex(0);
                     setUserInput(""); // 입력 필드 초기화
+                };
+
+                // 시나리오 재시작 함수
+                const handleReset = () => {
+                    setDisplayedMessages([]);
+                    setCurrentScenarioIndex(0);
+                    setCurrentAimoResponseIndex(-1);
+                    setIsAimoResponding(false);
+                    setUserInput("");
+                    setIsCompleted(false);
                 };
 
                 // 입력 폼 제출 핸들링
@@ -674,6 +699,9 @@
                                 // 입력 필드에 포커스
                                 if (inputRef.current) inputRef.current.focus();
                             }, 1000); // 1초 후에 다음 대화 준비
+                        } else {
+                            // 모든 시나리오가 완료됨
+                            setIsCompleted(true);
                         }
                         return;
                     }
@@ -688,7 +716,7 @@
                         setCurrentAimoResponseIndex(
                             currentAimoResponseIndex + 1,
                         );
-                    }, 800); // 800ms 간격으로 메시지 표시
+                    }, 1200); // 1200ms 간격으로 메시지 표시 (이전 800ms에서 변경)
 
                     return () => clearTimeout(timeoutId);
                 }, [
@@ -712,35 +740,6 @@
                             overflow: "hidden",
                         }}
                     >
-                        <div
-                            style={{
-                                textAlign: "center",
-                                padding: "15px 15px 10px",
-                                borderBottom:
-                                    "1px solid rgba(232, 232, 232, 0.08)",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontSize: "18px",
-                                    fontWeight: "500",
-                                    marginBottom: "5px",
-                                    color: "var(--text-primary)",
-                                }}
-                            >
-                                Crypto Portfolio Assistant
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: "12px",
-                                    color: "var(--text-secondary)",
-                                    fontWeight: "400",
-                                }}
-                            >
-                                Your automated portfolio tracking service
-                            </div>
-                        </div>
-
                         <div
                             ref={messageContainerRef}
                             style={{
@@ -795,7 +794,76 @@
                             />
                         </div>
 
-                        {!isAimoResponding &&
+                        {/* 입력 폼 표시 (시나리오 진행 중일 때) 또는 재시작 버튼 표시 (시나리오 완료되었을 때) */}
+                        {isCompleted ? (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    padding: "20px 20px",
+                                    borderTop:
+                                        "1px solid rgba(232, 232, 232, 0.08)",
+                                    backgroundColor: "var(--bg-color)",
+                                    position: "relative",
+                                    zIndex: 2,
+                                    justifyContent: "center",
+                                }}
+                            >
+                                <button
+                                    onClick={handleReset}
+                                    style={{
+                                        padding: "10px 24px",
+                                        background: "var(--send-button)",
+                                        color: "var(--text-primary)",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        fontSize: "14px",
+                                        fontWeight: "500",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s ease",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.transform =
+                                            "scale(1.05)";
+                                        e.currentTarget.style.backgroundColor =
+                                            "#515A69";
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.transform =
+                                            "scale(1)";
+                                        e.currentTarget.style.backgroundColor =
+                                            "var(--send-button)";
+                                    }}
+                                >
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M1 1.33333V6.66667H6.33333"
+                                            stroke="currentColor"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path
+                                            d="M2.34 10C2.7723 11.3821 3.5915 12.5971 4.7147 13.4667C5.8379 14.3363 7.2095 14.8202 8.6253 14.8486C10.0402 14.877 11.4279 14.4487 12.5829 13.6216C13.7379 12.7944 14.6038 11.6107 15.0872 10.2503C15.5706 8.89 15.6369 7.41789 15.2783 6.05994C14.9198 4.70199 14.1537 3.4916 13.0852 2.61176C12.0166 1.73193 10.6965 1.22151 9.3084 1.16767C7.9203 1.11384 6.5645 1.52081 5.44 2.34"
+                                            stroke="currentColor"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    Retry
+                                </button>
+                            </div>
+                        ) : (
+                            !isAimoResponding &&
                             currentScenarioIndex < conversationFlow.length && (
                                 <form
                                     onSubmit={handleSubmit}
@@ -888,7 +956,8 @@
                                         </svg>
                                     </button>
                                 </form>
-                            )}
+                            )
+                        )}
                     </div>
                 );
             };
