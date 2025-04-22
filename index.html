@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Crypto Portfolio Weekly Report</title>
+
+        <!-- Font -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            :root {
+                --bg-color: #1a1c1e;
+                --card-bg: #242a34;
+                --secondary-bg: #444b59;
+                --text-primary: #e8e8e8;
+                --text-secondary: #bfc0c6;
+                --accent-color: #444b59;
+                --border-color: #444b59;
+                --reasoning-color: #8a8d95;
+                --user-bubble: #303640;
+                --agent-bubble-border: rgba(232, 232, 232, 0.15);
+                --positive-color: #4ade80;
+                --negative-color: #f87171;
+                --chart-color: #444b59;
+                --input-bg: #242a34;
+                --send-button: #444b59;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: var(--bg-color);
+                font-family: "Inter", sans-serif;
+                color: var(--text-primary);
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 1.5;
+                overflow-x: hidden;
+            }
+
+            #root {
+                display: flex;
+                justify-content: center;
+                padding: 0;
+                min-height: 100vh;
+                width: 100%;
+            }
+
+            /* Custom scrollbar - only visible when user scrolls */
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: var(--secondary-bg);
+                border-radius: 3px;
+                opacity: 0.5;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #5a6275;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .fade-in {
+                animation: fadeIn 0.3s ease-out forwards;
+            }
+
+            /* Fallback styles in case React doesn't load */
+            .chat-container {
+                max-width: 100%;
+                margin: 0 auto;
+                padding: 15px;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 30px;
+                font-size: 15px;
+                color: var(--text-secondary);
+            }
+
+            /* Media queries for responsive design */
+            @media (max-width: 768px) {
+                body {
+                    font-size: 13px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                body {
+                    font-size: 12px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="root">
+            <div class="chat-container">
+                <div class="loading">Loading crypto portfolio assistant...</div>
+            </div>
+        </div>
+
+        <!-- React -->
+        <script
+            src="https://unpkg.com/react@18/umd/react.development.js"
+            crossorigin
+        ></script>
+        <script
+            src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+            crossorigin
+        ></script>
+
+        <!-- Babel -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+        <!-- Simple chat UI implementation -->
+        <script type="text/babel">
+            // Create a simple React app
+            const { useState, useEffect, useRef } = React;
+
+            // Message component
+            const Message = ({ isUser, isReasoning, children, label }) => {
+                return (
+                    <div
+                        style={{
+                            maxWidth: "100%",
+                            alignSelf: isUser ? "flex-end" : "flex-start",
+                            backgroundColor: isReasoning
+                                ? "transparent"
+                                : isUser
+                                  ? "var(--user-bubble)"
+                                  : "transparent",
+                            padding: isReasoning ? "8px 0 8px 10px" : "14px",
+                            borderRadius: "10px",
+                            marginBottom: "12px",
+                            border: isReasoning ? "none" : "1px solid",
+                            borderColor: isUser
+                                ? "rgba(232, 232, 232, 0.1)"
+                                : "var(--agent-bubble-border)",
+                            boxShadow: isReasoning
+                                ? "none"
+                                : isUser
+                                  ? "0 2px 4px rgba(0, 0, 0, 0.1)"
+                                  : "none",
+                            animation: "fadeIn 0.3s ease forwards",
+                            wordBreak: "break-word",
+                            overflowWrap: "break-word",
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: "11px",
+                                fontWeight: "500",
+                                marginBottom: "4px",
+                                color: isUser
+                                    ? "var(--text-secondary)"
+                                    : isReasoning
+                                      ? "var(--reasoning-color)"
+                                      : "var(--text-secondary)",
+                                textAlign: isUser ? "right" : "left",
+                            }}
+                        >
+                            {label}
+                        </div>
+                        <div
+                            style={{
+                                whiteSpace: "pre-wrap",
+                                fontStyle: isReasoning ? "italic" : "normal",
+                                color: isReasoning
+                                    ? "var(--reasoning-color)"
+                                    : "var(--text-primary)",
+                                lineHeight: "1.5",
+                                fontSize: "14px",
+                                fontWeight: "400",
+                            }}
+                        >
+                            {children}
+                        </div>
+                    </div>
+                );
+            };
+
+            // Asset card component
+            const AssetCard = ({ asset, icon, amount, value, change }) => {
+                const isPositive = change > 0;
+
+                return (
+                    <div
+                        style={{
+                            backgroundColor: "var(--secondary-bg)",
+                            borderRadius: "8px",
+                            padding: "12px",
+                            border: "1px solid rgba(232, 232, 232, 0.05)",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                marginBottom: "6px",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: "26px",
+                                    height: "26px",
+                                    borderRadius: "50%",
+                                    background: "var(--secondary-bg)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    marginRight: "8px",
+                                    fontWeight: "500",
+                                    color: "var(--text-primary)",
+                                    border: "1px solid rgba(232, 232, 232, 0.2)",
+                                    fontSize: "11px",
+                                }}
+                            >
+                                {icon}
+                            </div>
+                            <div
+                                style={{
+                                    fontWeight: "500",
+                                    color: "var(--text-primary)",
+                                    fontSize: "14px",
+                                }}
+                            >
+                                {asset}
+                            </div>
+                        </div>
+
+                        <div
+                            style={{
+                                fontSize: "15px",
+                                fontWeight: "500",
+                                marginBottom: "2px",
+                                color: "var(--text-primary)",
+                            }}
+                        >
+                            {amount}
+                        </div>
+
+                        <div
+                            style={{
+                                fontSize: "12px",
+                                color: "var(--text-secondary)",
+                                marginBottom: "6px",
+                            }}
+                        >
+                            {value}
+                        </div>
+
+                        <div
+                            style={{
+                                display: "inline-block",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "400",
+                                backgroundColor: isPositive
+                                    ? "rgba(74, 222, 128, 0.1)"
+                                    : "rgba(248, 113, 113, 0.1)",
+                                color: isPositive
+                                    ? "var(--positive-color)"
+                                    : "var(--negative-color)",
+                            }}
+                        >
+                            {isPositive ? "+" : ""}
+                            {change}%
+                        </div>
+                    </div>
+                );
+            };
+
+            // Chart component
+            const PerformanceChart = () => {
+                const data = [60, 75, 45, 65, 80, 70, 85];
+                const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+                return (
+                    <div style={{ marginTop: "20px" }}>
+                        <div
+                            style={{
+                                fontSize: "13px",
+                                fontWeight: "500",
+                                marginBottom: "10px",
+                                color: "var(--text-primary)",
+                            }}
+                        >
+                            Weekly Performance
+                        </div>
+                        <div
+                            style={{
+                                height: "120px",
+                                display: "flex",
+                                alignItems: "flex-end",
+                                position: "relative",
+                                gap: "12px",
+                                marginBottom: "25px",
+                            }}
+                        >
+                            {data.map((value, index) => (
+                                <div
+                                    key={index}
+                                    style={{
+                                        flex: 1,
+                                        position: "relative",
+                                        height: "120px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "flex-end",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            height: `${value}%`,
+                                            background: "var(--chart-color)",
+                                            borderRadius: "1px",
+                                            opacity: 0.5,
+                                            width: "100%",
+                                            maxWidth: "14px",
+                                            margin: "0 auto",
+                                        }}
+                                    ></div>
+                                    <div
+                                        style={{
+                                            position: "absolute",
+                                            bottom: "-20px",
+                                            left: 0,
+                                            right: 0,
+                                            fontSize: "10px",
+                                            color: "var(--text-secondary)",
+                                            textAlign: "center",
+                                        }}
+                                    >
+                                        {days[index]}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            // Portfolio preview component
+            const PortfolioPreview = ({ isVisible }) => {
+                if (!isVisible) return null;
+
+                return (
+                    <div
+                        style={{
+                            backgroundColor: "var(--card-bg)",
+                            borderRadius: "12px",
+                            padding: "16px",
+                            marginBottom: "20px",
+                            border: "1px solid var(--border-color)",
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
+                            animation: "fadeIn 0.5s ease",
+                            display: "block",
+                            width: "100%",
+                            maxWidth: "100%",
+                            overflowX: "hidden",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: "14px",
+                                flexWrap: "wrap",
+                                gap: "6px",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontSize: "16px",
+                                    fontWeight: "500",
+                                    color: "var(--text-primary)",
+                                }}
+                            >
+                                Weekly Crypto Portfolio Report
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: "11px",
+                                    padding: "4px 8px",
+                                    borderRadius: "6px",
+                                    backgroundColor: "var(--secondary-bg)",
+                                    color: "var(--text-secondary)",
+                                }}
+                            >
+                                Monday, July 29, 2023 - 09:00 UTC
+                            </div>
+                        </div>
+
+                        <div
+                            style={{
+                                height: "1px",
+                                backgroundColor: "var(--border-color)",
+                                marginBottom: "16px",
+                                opacity: 0.5,
+                            }}
+                        ></div>
+
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                    "repeat(auto-fill, minmax(160px, 1fr))",
+                                gap: "10px",
+                                marginBottom: "16px",
+                            }}
+                        >
+                            <AssetCard
+                                asset="Bitcoin"
+                                icon="BTC"
+                                amount="1.245 BTC"
+                                value="$39,840.25"
+                                change={5.2}
+                            />
+                            <AssetCard
+                                asset="Ethereum"
+                                icon="ETH"
+                                amount="12.5 ETH"
+                                value="$21,375.00"
+                                change={3.8}
+                            />
+                            <AssetCard
+                                asset="Solana"
+                                icon="SOL"
+                                amount="145 SOL"
+                                value="$8,700.00"
+                                change={-2.1}
+                            />
+                            <AssetCard
+                                asset="Polkadot"
+                                icon="DOT"
+                                amount="320 DOT"
+                                value="$1,920.00"
+                                change={1.4}
+                            />
+                        </div>
+
+                        <PerformanceChart />
+
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                backgroundColor: "var(--secondary-bg)",
+                                padding: "14px",
+                                borderRadius: "8px",
+                                marginTop: "16px",
+                                border: "1px solid rgba(232, 232, 232, 0.05)",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontWeight: "500",
+                                    color: "var(--text-primary)",
+                                    fontSize: "14px",
+                                }}
+                            >
+                                Total Portfolio Value
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: "16px",
+                                    fontWeight: "500",
+                                    color: "var(--text-primary)",
+                                }}
+                            >
+                                $71,835.25
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Main App component
+            const App = () => {
+                // 대화 시나리오 정의
+                const conversationFlow = [
+                    // 첫 번째 사용자 입력과 아이모 응답들
+                    {
+                        userMessage: {
+                            type: "user",
+                            label: "Me",
+                            content:
+                                "Send me a weekly report of all my crypto assets every Monday at 9 AM.",
+                        },
+                        aimoResponses: [
+                            {
+                                type: "reasoning",
+                                label: "Aimo Reasoning",
+                                content:
+                                    "To accomplish this, I need to:\n- Set a scheduler to run every Monday at 09:00\n- Collect trade logs, holdings, and PnL stats\n- Summarize the data into a report\n- Send the report via Gmail",
+                            },
+                            {
+                                type: "agent",
+                                label: "Aimo",
+                                content:
+                                    "Got it! Let's start by scheduling this to run every Monday at 9 AM.",
+                            },
+                            {
+                                type: "reasoning",
+                                label: "Aimo Reasoning",
+                                content:
+                                    "Next, I'll need to fetch your portfolio data using:\n- Trades Tool\n- Inventory Tool\n- Invest Stats Tool",
+                            },
+                            {
+                                type: "agent",
+                                label: "Aimo",
+                                content:
+                                    "Connecting Trades Tool, Inventory Tool, and Invest Stats Tool to collect the necessary data.",
+                            },
+                            {
+                                type: "reasoning",
+                                label: "Aimo Reasoning",
+                                content:
+                                    "Now I need a way to summarize this into a clean weekly report...",
+                            },
+                            {
+                                type: "agent",
+                                label: "Aimo",
+                                content:
+                                    "Adding Report Generator Agent. It'll compile your trades, asset inventory, and PnL stats into a markdown summary.",
+                            },
+                            {
+                                type: "reasoning",
+                                label: "Aimo Reasoning",
+                                content:
+                                    "Finally, the user wants this report delivered via email.",
+                            },
+                            {
+                                type: "agent",
+                                label: "Aimo",
+                                content:
+                                    "Connecting Gmail Tool to deliver the report. I'll prefill the subject and attach the summary.",
+                            },
+                        ],
+                    },
+                    // 두 번째 사용자 입력과 아이모 응답들
+                    {
+                        userMessage: {
+                            type: "user",
+                            label: "Me",
+                            content:
+                                "Perfect. Can you send me a preview of this week's report?",
+                        },
+                        aimoResponses: [
+                            {
+                                type: "agent",
+                                label: "Aimo",
+                                content:
+                                    "Sure! I've just sent your first report as of 09:00 UTC today. Check your Gmail inbox for the summary.",
+                            },
+                            { type: "portfolio" },
+                        ],
+                    },
+                ];
+
+                // 상태 관리
+                const [displayedMessages, setDisplayedMessages] = useState([]);
+                const [currentScenarioIndex, setCurrentScenarioIndex] =
+                    useState(0);
+                const [currentAimoResponseIndex, setCurrentAimoResponseIndex] =
+                    useState(-1);
+                const [isAimoResponding, setIsAimoResponding] = useState(false);
+                const [userInput, setUserInput] = useState("");
+                const messagesEndRef = useRef(null);
+                const messageContainerRef = useRef(null);
+
+                // 입력 필드 참조
+                const inputRef = useRef(null);
+
+                // 자동 스크롤 함수
+                const scrollToBottom = () => {
+                    if (messagesEndRef.current) {
+                        messagesEndRef.current.scrollIntoView({
+                            behavior: "smooth",
+                        });
+                    }
+                };
+
+                // 메시지가 추가될 때마다 스크롤
+                useEffect(() => {
+                    scrollToBottom();
+                }, [displayedMessages]);
+
+                // 사용자 메시지 처리
+                const handleUserMessageSubmit = () => {
+                    if (
+                        currentScenarioIndex >= conversationFlow.length ||
+                        !conversationFlow[currentScenarioIndex].userMessage
+                            .content
+                    )
+                        return;
+
+                    const currentUserMessage =
+                        conversationFlow[currentScenarioIndex].userMessage;
+                    setDisplayedMessages([
+                        ...displayedMessages,
+                        currentUserMessage,
+                    ]);
+                    setIsAimoResponding(true);
+                    setCurrentAimoResponseIndex(0);
+                    setUserInput(""); // 입력 필드 초기화
+                };
+
+                // 입력 폼 제출 핸들링
+                const handleSubmit = (e) => {
+                    e.preventDefault();
+                    handleUserMessageSubmit();
+                };
+
+                // 아이모 응답 처리 (일정 시간 간격으로 순차적 표시)
+                useEffect(() => {
+                    if (!isAimoResponding || currentAimoResponseIndex === -1)
+                        return;
+
+                    const currentScenario =
+                        conversationFlow[currentScenarioIndex];
+                    if (
+                        !currentScenario ||
+                        currentAimoResponseIndex >=
+                            currentScenario.aimoResponses.length
+                    ) {
+                        // 현재 시나리오의 모든 응답이 표시됨
+                        setIsAimoResponding(false);
+                        setCurrentAimoResponseIndex(-1);
+
+                        // 다음 시나리오가 있으면 사용자 입력 활성화
+                        if (
+                            currentScenarioIndex + 1 <
+                            conversationFlow.length
+                        ) {
+                            setTimeout(() => {
+                                setCurrentScenarioIndex(
+                                    currentScenarioIndex + 1,
+                                );
+                                // 입력 필드에 다음 메시지 미리 설정
+                                setUserInput(
+                                    conversationFlow[currentScenarioIndex + 1]
+                                        .userMessage.content,
+                                );
+                                // 입력 필드에 포커스
+                                if (inputRef.current) inputRef.current.focus();
+                            }, 1000); // 1초 후에 다음 대화 준비
+                        }
+                        return;
+                    }
+
+                    // 일정 시간 후 다음 아이모 응답 표시
+                    const timeoutId = setTimeout(() => {
+                        const nextResponse =
+                            currentScenario.aimoResponses[
+                                currentAimoResponseIndex
+                            ];
+                        setDisplayedMessages((prev) => [...prev, nextResponse]);
+                        setCurrentAimoResponseIndex(
+                            currentAimoResponseIndex + 1,
+                        );
+                    }, 800); // 800ms 간격으로 메시지 표시
+
+                    return () => clearTimeout(timeoutId);
+                }, [
+                    isAimoResponding,
+                    currentAimoResponseIndex,
+                    currentScenarioIndex,
+                    displayedMessages,
+                ]);
+
+                return (
+                    <div
+                        style={{
+                            width: "100%",
+                            maxWidth: "750px",
+                            margin: "0 auto",
+                            padding: "0",
+                            display: "flex",
+                            flexDirection: "column",
+                            height: "100vh",
+                            position: "relative",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <div
+                            style={{
+                                textAlign: "center",
+                                padding: "15px 15px 10px",
+                                borderBottom:
+                                    "1px solid rgba(232, 232, 232, 0.08)",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontSize: "18px",
+                                    fontWeight: "500",
+                                    marginBottom: "5px",
+                                    color: "var(--text-primary)",
+                                }}
+                            >
+                                Crypto Portfolio Assistant
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: "12px",
+                                    color: "var(--text-secondary)",
+                                    fontWeight: "400",
+                                }}
+                            >
+                                Your automated portfolio tracking service
+                            </div>
+                        </div>
+
+                        <div
+                            ref={messageContainerRef}
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "10px",
+                                width: "100%",
+                                flex: "1 1 auto",
+                                overflowY: "auto",
+                                padding: "15px",
+                                scrollbarWidth: "thin",
+                                scrollbarColor:
+                                    "var(--secondary-bg) transparent",
+                                position: "relative",
+                            }}
+                        >
+                            {displayedMessages.map((message, index) => {
+                                if (message.type === "portfolio") {
+                                    return (
+                                        <div
+                                            key={`portfolio-container-${index}`}
+                                            style={{
+                                                width: "100%",
+                                                minHeight: "500px",
+                                                marginBottom: "10px",
+                                            }}
+                                        >
+                                            <PortfolioPreview
+                                                key={`portfolio-${index}`}
+                                                isVisible={true}
+                                            />
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <Message
+                                        key={`message-${index}`}
+                                        isUser={message.type === "user"}
+                                        isReasoning={
+                                            message.type === "reasoning"
+                                        }
+                                        label={message.label}
+                                    >
+                                        {message.content}
+                                    </Message>
+                                );
+                            })}
+                            <div
+                                ref={messagesEndRef}
+                                style={{ height: "20px" }}
+                            />
+                        </div>
+
+                        {!isAimoResponding &&
+                            currentScenarioIndex < conversationFlow.length && (
+                                <form
+                                    onSubmit={handleSubmit}
+                                    style={{
+                                        display: "flex",
+                                        padding: "20px 20px",
+                                        borderTop:
+                                            "1px solid rgba(232, 232, 232, 0.08)",
+                                        backgroundColor: "var(--bg-color)",
+                                        position: "relative",
+                                        zIndex: 2,
+                                    }}
+                                >
+                                    <input
+                                        ref={inputRef}
+                                        type="text"
+                                        value={
+                                            userInput ||
+                                            conversationFlow[
+                                                currentScenarioIndex
+                                            ]?.userMessage?.content ||
+                                            ""
+                                        }
+                                        readOnly={true}
+                                        style={{
+                                            flex: 1,
+                                            padding: "8px 12px",
+                                            borderRadius: "8px",
+                                            border: "1px solid rgba(232, 232, 232, 0.15)",
+                                            backgroundColor: "var(--input-bg)",
+                                            color: "var(--text-primary)",
+                                            fontSize: "14px",
+                                            outline: "none",
+                                            marginRight: "10px",
+                                            boxShadow:
+                                                "inset 0 1px 3px rgba(0, 0, 0, 0.1)",
+                                        }}
+                                    />
+                                    <button
+                                        type="submit"
+                                        style={{
+                                            width: "42px",
+                                            height: "42px",
+                                            borderRadius: "8px",
+                                            border: "none",
+                                            backgroundColor:
+                                                "var(--send-button)",
+                                            color: "var(--text-primary)",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            cursor: "pointer",
+                                            transition: "all 0.2s ease",
+                                        }}
+                                        disabled={isAimoResponding}
+                                        onMouseOver={(e) => {
+                                            e.currentTarget.style.transform =
+                                                "scale(1.05)";
+                                            e.currentTarget.style.backgroundColor =
+                                                "#515A69";
+                                        }}
+                                        onMouseOut={(e) => {
+                                            e.currentTarget.style.transform =
+                                                "scale(1)";
+                                            e.currentTarget.style.backgroundColor =
+                                                "var(--send-button)";
+                                        }}
+                                    >
+                                        <svg
+                                            width="20"
+                                            height="20"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path
+                                                d="M22 2L11 13"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                            <path
+                                                d="M22 2L15 22L11 13L2 9L22 2Z"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                    </button>
+                                </form>
+                            )}
+                    </div>
+                );
+            };
+
+            // Render the App
+            const rootElement = document.getElementById("root");
+            ReactDOM.render(<App />, rootElement);
+        </script>
+    </body>
+</html>
