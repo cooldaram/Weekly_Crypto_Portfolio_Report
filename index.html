@@ -48,6 +48,7 @@
                 font-weight: 400;
                 line-height: 1.5;
                 overflow-x: hidden;
+                height: 100%;
             }
 
             #root {
@@ -56,6 +57,7 @@
                 padding: 0;
                 min-height: 100vh;
                 width: 100%;
+                overflow: hidden;
             }
 
             /* Custom scrollbar - only visible when user scrolls */
@@ -701,18 +703,61 @@
 
                 // 자동 스크롤 함수
                 const scrollToBottom = () => {
-                    if (messagesEndRef.current) {
+                    if (messagesEndRef.current && messageContainerRef.current) {
+                        // window.scrollTo 대신 컨테이너 내부 스크롤만 조정
                         messagesEndRef.current.scrollIntoView({
                             behavior: "smooth",
                             block: "end",
+                            inline: "nearest",
                         });
                     }
                 };
 
                 // 메시지가 추가될 때마다 스크롤
                 useEffect(() => {
-                    scrollToBottom();
+                    // 스크롤 타이머를 약간 늦게 설정하여 DOM 업데이트 후 스크롤 실행
+                    const scrollTimer = setTimeout(() => {
+                        if (messageContainerRef.current) {
+                            scrollToBottom();
+                        }
+                    }, 100);
+
+                    return () => clearTimeout(scrollTimer);
                 }, [messages]);
+
+                // 스크롤 이벤트가 부모로 전파되지 않도록 처리
+                useEffect(() => {
+                    const handleWheel = (e) => {
+                        // 컨테이너가 모든 내용을 표시하고 있지 않은 경우에만 이벤트 가로채기
+                        if (
+                            messageContainerRef.current &&
+                            messageContainerRef.current.scrollHeight >
+                                messageContainerRef.current.clientHeight
+                        ) {
+                            e.stopPropagation();
+                        }
+                    };
+
+                    const container = messageContainerRef.current;
+                    if (container) {
+                        container.addEventListener("wheel", handleWheel, {
+                            passive: false,
+                        });
+                        container.addEventListener("touchmove", handleWheel, {
+                            passive: false,
+                        });
+                    }
+
+                    return () => {
+                        if (container) {
+                            container.removeEventListener("wheel", handleWheel);
+                            container.removeEventListener(
+                                "touchmove",
+                                handleWheel,
+                            );
+                        }
+                    };
+                }, []);
 
                 // 처음 화면이 로드될 때 상태 초기화
                 useEffect(() => {
@@ -866,11 +911,17 @@
                                 width: "100%",
                                 flex: "1 1 auto",
                                 overflowY: "auto",
+                                overflowX: "hidden",
                                 padding: "15px",
                                 scrollbarWidth: "thin",
                                 scrollbarColor:
                                     "var(--secondary-bg) transparent",
                                 position: "relative",
+                                WebkitOverflowScrolling: "touch", // iOS 부드러운 스크롤
+                            }}
+                            onScroll={(e) => {
+                                // 스크롤 이벤트가 부모로 전파되지 않도록 함
+                                e.stopPropagation();
                             }}
                         >
                             {messages.map((message, index) => {
