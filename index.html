@@ -36,52 +36,44 @@
 
             * {
                 box-sizing: border-box;
+            }
+
+            body {
                 margin: 0;
                 padding: 0;
-            }
-
-            html,
-            body {
-                height: 100%;
-                overflow: hidden;
                 background-color: var(--bg-color);
-            }
-
-            body {
                 font-family: "Inter", sans-serif;
                 color: var(--text-primary);
                 font-size: 14px;
                 font-weight: 400;
                 line-height: 1.5;
-                display: flex;
-                justify-content: center;
+                overflow-x: hidden;
             }
 
             #root {
                 display: flex;
+                justify-content: center;
+                padding: 0;
+                min-height: 100vh;
                 width: 100%;
-                height: 100%;
-                max-width: 750px;
-                position: relative;
-                flex-direction: column;
             }
 
             /* Custom scrollbar - only visible when user scrolls */
-            #message-container::-webkit-scrollbar {
+            ::-webkit-scrollbar {
                 width: 6px;
             }
 
-            #message-container::-webkit-scrollbar-track {
+            ::-webkit-scrollbar-track {
                 background: transparent;
             }
 
-            #message-container::-webkit-scrollbar-thumb {
+            ::-webkit-scrollbar-thumb {
                 background: var(--secondary-bg);
                 border-radius: 3px;
                 opacity: 0.5;
             }
 
-            #message-container::-webkit-scrollbar-thumb:hover {
+            ::-webkit-scrollbar-thumb:hover {
                 background: #5a6275;
             }
 
@@ -102,11 +94,16 @@
 
             /* Fallback styles in case React doesn't load */
             .chat-container {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
+                max-width: 100%;
+                margin: 0 auto;
+                padding: 15px;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 30px;
+                font-size: 15px;
+                color: var(--text-secondary);
             }
 
             /* 메모리 저장 표시 스타일 */
@@ -139,91 +136,52 @@
                 }
             }
 
-            #message-container {
-                flex: 1;
-                overflow-y: auto;
-                overflow-x: hidden;
-                display: flex;
-                flex-direction: column;
-                padding: 15px;
-                -webkit-overflow-scrolling: touch;
-                height: calc(
-                    100% - 70px
-                ); /* 입력 영역 높이를 제외한 나머지 높이 */
+            /* 타이핑 로딩 애니메이션 */
+            @keyframes typingWave {
+                0%,
+                100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-5px);
+                }
             }
 
-            #input-area {
-                padding: 15px;
-                border-top: 1px solid rgba(232, 232, 232, 0.08);
-                background-color: var(--bg-color);
-                height: 70px; /* 입력 영역의 고정 높이 */
-            }
-
-            .retry-button {
-                padding: 10px 24px;
-                background: var(--send-button);
-                color: var(--text-primary);
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s ease;
+            .typing-indicator {
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                margin-bottom: 12px;
+                margin-left: 4px;
+                margin-top: 8px;
             }
 
-            .retry-button:hover {
-                transform: scale(1.05);
-                background-color: #60a5fa;
+            .typing-dot {
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background-color: rgba(232, 232, 232, 0.8);
+                margin: 0 3px;
             }
 
-            .input-form {
-                display: flex;
+            .typing-dot:nth-child(1) {
+                animation: typingWave 1.3s infinite ease-in-out 0s;
             }
 
-            .text-input {
-                flex: 1;
-                padding: 8px 12px;
-                border-radius: 8px;
-                border: 1px solid rgba(232, 232, 232, 0.15);
-                background-color: var(--input-bg);
-                color: var(--text-primary);
-                font-size: 14px;
-                outline: none;
-                margin-right: 10px;
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            .typing-dot:nth-child(2) {
+                animation: typingWave 1.3s infinite ease-in-out 0.2s;
             }
 
-            .send-button {
-                width: 42px;
-                height: 42px;
-                border-radius: 8px;
-                border: none;
-                background-color: var(--send-button);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .send-button:hover {
-                transform: scale(1.05);
-                background-color: #60a5fa;
-            }
-
-            .send-button:disabled {
-                background-color: var(--secondary-bg);
-                cursor: default;
-                opacity: 0.6;
+            .typing-dot:nth-child(3) {
+                animation: typingWave 1.3s infinite ease-in-out 0.4s;
             }
         </style>
     </head>
     <body>
-        <div id="root"></div>
+        <div id="root">
+            <div class="chat-container">
+                <div class="loading">Loading crypto portfolio assistant...</div>
+            </div>
+        </div>
 
         <!-- React -->
         <script
@@ -242,6 +200,20 @@
         <script type="text/babel">
             // Create a simple React app
             const { useState, useEffect, useRef } = React;
+
+            // 타이핑 표시기 컴포넌트
+            const TypingIndicator = () => {
+                return (
+                    <div
+                        className="typing-indicator"
+                        style={{ alignSelf: "flex-start" }}
+                    >
+                        <div className="typing-dot"></div>
+                        <div className="typing-dot"></div>
+                        <div className="typing-dot"></div>
+                    </div>
+                );
+            };
 
             // Message component
             const Message = ({
@@ -715,7 +687,7 @@
                 },
             ];
 
-            // Main App component
+            // Main App component - 완전히 다시 작성합니다.
             const App = () => {
                 // 메시지 리스트와 대화 완료 상태만 관리
                 const [messages, setMessages] = useState([]);
@@ -723,6 +695,7 @@
                 const [isProcessing, setIsProcessing] = useState(false);
                 const [currentStep, setCurrentStep] = useState(0);
                 const [inputText, setInputText] = useState(""); // 입력창 텍스트 상태 추가
+                const [isTyping, setIsTyping] = useState(false); // 타이핑 상태 추가
                 const messagesEndRef = useRef(null);
                 const messageContainerRef = useRef(null);
 
@@ -736,100 +709,14 @@
                     }
                 };
 
-                // 메시지가 추가될 때마다 자동 스크롤
+                // 메시지가 추가될 때마다 스크롤
                 useEffect(() => {
-                    setTimeout(scrollToBottom, 100);
+                    scrollToBottom();
                 }, [messages]);
 
                 // 처음 화면이 로드될 때 상태 초기화
                 useEffect(() => {
                     resetConversation();
-
-                    // 모든 스크롤 이벤트를 차단하는 함수
-                    const preventAllScroll = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    };
-
-                    // 메시지 컨테이너 내부에서만 스크롤 허용하는 함수
-                    const allowContainerScroll = (e) => {
-                        // 이벤트가 발생한 요소가 메시지 컨테이너 내부인지 확인
-                        let targetElement = e.target;
-                        let isInsideContainer = false;
-
-                        while (targetElement != null) {
-                            if (targetElement.id === "message-container") {
-                                isInsideContainer = true;
-                                break;
-                            }
-                            targetElement = targetElement.parentElement;
-                        }
-
-                        // 메시지 컨테이너 외부에서 발생한 스크롤은 차단
-                        if (!isInsideContainer) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    };
-
-                    // 터치 이벤트 처리
-                    const handleTouchMove = (e) => {
-                        let targetElement = e.target;
-                        let isInsideContainer = false;
-
-                        while (targetElement != null) {
-                            if (targetElement.id === "message-container") {
-                                isInsideContainer = true;
-                                break;
-                            }
-                            targetElement = targetElement.parentElement;
-                        }
-
-                        if (!isInsideContainer) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    };
-
-                    // 문서 전체에 스크롤 이벤트 리스너 추가
-                    document.addEventListener("wheel", allowContainerScroll, {
-                        passive: false,
-                    });
-                    document.addEventListener("touchmove", handleTouchMove, {
-                        passive: false,
-                    });
-                    document.addEventListener("scroll", preventAllScroll, {
-                        passive: false,
-                    });
-
-                    // iframe 내부에서 최상위 스크롤 차단
-                    if (window.parent && window.parent !== window) {
-                        window.addEventListener("wheel", preventAllScroll, {
-                            passive: false,
-                        });
-                    }
-
-                    return () => {
-                        document.removeEventListener(
-                            "wheel",
-                            allowContainerScroll,
-                        );
-                        document.removeEventListener(
-                            "touchmove",
-                            handleTouchMove,
-                        );
-                        document.removeEventListener(
-                            "scroll",
-                            preventAllScroll,
-                        );
-
-                        if (window.parent && window.parent !== window) {
-                            window.removeEventListener(
-                                "wheel",
-                                preventAllScroll,
-                            );
-                        }
-                    };
                 }, []);
 
                 // currentStep이 변경될 때 입력창 텍스트 업데이트
@@ -866,20 +753,34 @@
                         setMessages((prev) => [...prev, userMessage]);
                     }
 
-                    // 응답 처리 시작 - 딜레이 없이 즉시 진행
-                    processResponses(
-                        scenarioData.aimoResponses,
-                        0,
-                        scenarioIndex,
-                    );
+                    // 타이핑 표시기 활성화
+                    setTimeout(() => {
+                        setIsTyping(true);
+                        // 스크롤 다운
+                        scrollToBottom();
+                    }, 500);
+
+                    // 응답 처리 시작
+                    setTimeout(() => {
+                        processResponses(
+                            scenarioData.aimoResponses,
+                            0,
+                            scenarioIndex,
+                        );
+                    }, 1800); // 로딩 애니메이션을 좀 더 보여주기 위해 약간의 지연
                 };
 
-                // 응답 메시지 순차적으로 처리 - 로딩 표시기는 제거하되 딜레이는 유지
+                // 응답 메시지 순차적으로 처리
                 const processResponses = (
                     responses,
                     responseIndex,
                     scenarioIndex,
                 ) => {
+                    // 첫 번째 응답 처리 직전에 타이핑 표시기 숨기기
+                    if (responseIndex === 0) {
+                        setIsTyping(false);
+                    }
+
                     if (responseIndex >= responses.length) {
                         // 모든 응답이 처리됨
                         setIsProcessing(false);
@@ -892,12 +793,6 @@
                             // 모든 시나리오 완료
                             setIsCompleted(true);
                         }
-
-                        // 모든 처리가 끝난 후 스크롤 실행
-                        setTimeout(() => {
-                            scrollToBottom();
-                        }, 300);
-
                         return;
                     }
 
@@ -906,18 +801,31 @@
                         const response = responses[responseIndex];
                         setMessages((prev) => [...prev, response]);
 
-                        // 메시지 추가 후 스크롤 실행
-                        setTimeout(() => {
-                            scrollToBottom();
-                        }, 100);
+                        // 다음 응답 전에 타이핑 표시기 활성화 (마지막 응답이 아닌 경우)
+                        if (responseIndex + 1 < responses.length) {
+                            setTimeout(() => {
+                                setIsTyping(true);
+                                scrollToBottom();
+                            }, 700); // 이전 메시지가 표시된 후 약간 기다렸다가 로딩 표시
 
-                        // 다음 응답 처리
-                        processResponses(
-                            responses,
-                            responseIndex + 1,
-                            scenarioIndex,
-                        );
-                    }, 1200); // 메시지 표시 간격 조정
+                            setTimeout(() => {
+                                setIsTyping(false);
+                                // 다음 응답 처리
+                                processResponses(
+                                    responses,
+                                    responseIndex + 1,
+                                    scenarioIndex,
+                                );
+                            }, 2000); // 로딩 표시가 좀 더 자연스럽게 보이도록 타이밍 조정
+                        } else {
+                            // 마지막 응답이면 바로 다음 처리
+                            processResponses(
+                                responses,
+                                responseIndex + 1,
+                                scenarioIndex,
+                            );
+                        }
+                    }, 800); // 메시지 표시 간격 조정
                 };
 
                 // 대화 재설정
@@ -939,19 +847,30 @@
                     <div
                         style={{
                             width: "100%",
-                            height: "100%",
+                            maxWidth: "750px",
+                            margin: "0 auto",
+                            padding: "0",
                             display: "flex",
                             flexDirection: "column",
+                            height: "100vh",
+                            position: "relative",
+                            overflow: "hidden",
                         }}
                     >
                         <div
-                            id="message-container"
                             ref={messageContainerRef}
                             style={{
-                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "10px",
+                                width: "100%",
+                                flex: "1 1 auto",
                                 overflowY: "auto",
-                                overflowX: "hidden",
                                 padding: "15px",
+                                scrollbarWidth: "thin",
+                                scrollbarColor:
+                                    "var(--secondary-bg) transparent",
+                                position: "relative",
                             }}
                         >
                             {messages.map((message, index) => {
@@ -989,6 +908,9 @@
                                 );
                             })}
 
+                            {/* 타이핑 표시기 */}
+                            {isTyping && <TypingIndicator />}
+
                             <div
                                 ref={messagesEndRef}
                                 style={{ height: "40px" }}
@@ -996,69 +918,148 @@
                         </div>
 
                         {/* 입력 폼 또는 재시작 버튼 */}
-                        <div id="input-area">
-                            {isCompleted ? (
-                                <div
+                        {isCompleted ? (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    padding: "20px 20px",
+                                    borderTop:
+                                        "1px solid rgba(232, 232, 232, 0.08)",
+                                    backgroundColor: "var(--bg-color)",
+                                    position: "relative",
+                                    zIndex: 2,
+                                    justifyContent: "center",
+                                }}
+                            >
+                                <button
+                                    onClick={resetConversation}
                                     style={{
+                                        padding: "10px 24px",
+                                        background: "var(--send-button)",
+                                        color: "var(--text-primary)",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        fontSize: "14px",
+                                        fontWeight: "500",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s ease",
                                         display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.transform =
+                                            "scale(1.05)";
+                                        e.currentTarget.style.backgroundColor =
+                                            "#60A5FA";
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.transform =
+                                            "scale(1)";
+                                        e.currentTarget.style.backgroundColor =
+                                            "var(--send-button)";
+                                    }}
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        ) : (
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleUserMessage(currentStep);
+                                }}
+                                style={{
+                                    display: "flex",
+                                    padding: "20px 20px",
+                                    borderTop:
+                                        "1px solid rgba(232, 232, 232, 0.08)",
+                                    backgroundColor: "var(--bg-color)",
+                                    position: "relative",
+                                    zIndex: 2,
+                                }}
+                            >
+                                <input
+                                    type="text"
+                                    value={inputText}
+                                    readOnly={true}
+                                    style={{
+                                        flex: 1,
+                                        padding: "8px 12px",
+                                        borderRadius: "8px",
+                                        border: "1px solid rgba(232, 232, 232, 0.15)",
+                                        backgroundColor: "var(--input-bg)",
+                                        color: "var(--text-primary)",
+                                        fontSize: "14px",
+                                        outline: "none",
+                                        marginRight: "10px",
+                                        boxShadow:
+                                            "inset 0 1px 3px rgba(0, 0, 0, 0.1)",
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isProcessing}
+                                    style={{
+                                        width: "42px",
+                                        height: "42px",
+                                        borderRadius: "8px",
+                                        border: "none",
+                                        backgroundColor: isProcessing
+                                            ? "var(--secondary-bg)"
+                                            : "var(--send-button)",
+                                        color: "white",
+                                        display: "flex",
+                                        alignItems: "center",
                                         justifyContent: "center",
+                                        cursor: isProcessing
+                                            ? "default"
+                                            : "pointer",
+                                        transition: "all 0.2s ease",
+                                        opacity: isProcessing ? 0.6 : 1,
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (!isProcessing) {
+                                            e.currentTarget.style.transform =
+                                                "scale(1.05)";
+                                            e.currentTarget.style.backgroundColor =
+                                                "#60A5FA";
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (!isProcessing) {
+                                            e.currentTarget.style.transform =
+                                                "scale(1)";
+                                            e.currentTarget.style.backgroundColor =
+                                                "var(--send-button)";
+                                        }
                                     }}
                                 >
-                                    <button
-                                        onClick={resetConversation}
-                                        className="retry-button"
+                                    <svg
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
                                     >
-                                        Retry
-                                    </button>
-                                </div>
-                            ) : (
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        handleUserMessage(currentStep);
-                                    }}
-                                    className="input-form"
-                                >
-                                    <input
-                                        type="text"
-                                        value={inputText}
-                                        readOnly={true}
-                                        className="text-input"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={isProcessing}
-                                        className="send-button"
-                                        style={{
-                                            opacity: isProcessing ? 0.6 : 1,
-                                        }}
-                                    >
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                d="M22 2L11 13"
-                                                stroke="white"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                            <path
-                                                d="M22 2L15 22L11 13L2 9L22 2Z"
-                                                stroke="white"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                        </svg>
-                                    </button>
-                                </form>
-                            )}
-                        </div>
+                                        <path
+                                            d="M22 2L11 13"
+                                            stroke="white"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path
+                                            d="M22 2L15 22L11 13L2 9L22 2Z"
+                                            stroke="white"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                </button>
+                            </form>
+                        )}
                     </div>
                 );
             };
