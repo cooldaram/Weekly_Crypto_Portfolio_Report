@@ -44,15 +44,15 @@
       font-size: 14px;
       font-weight: 400;
       line-height: 1.5;
-      overflow: hidden; /* 외부 스크롤 방지 */
-      height: 100%;
+      overflow: hidden;
+      height: 100vh;
     }
     
     #root {
       display: flex;
       justify-content: center;
       padding: 0;
-      height: 100%;
+      height: 100vh;
       width: 100%;
       overflow: hidden;
     }
@@ -499,7 +499,7 @@
       const messagesEndRef = useRef(null);
       const messageContainerRef = useRef(null);
       
-      // 간단한 자동 스크롤 함수
+      // 자동 스크롤 함수
       const scrollToBottom = () => {
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
@@ -513,6 +513,26 @@
       useEffect(() => {
         setTimeout(scrollToBottom, 100);
       }, [messages, isTyping]);
+      
+      // 스크롤이 부모 요소로 전파되지 않도록 처리
+      useEffect(() => {
+        const stopPropagation = (e) => {
+          e.stopPropagation();
+        };
+        
+        const container = messageContainerRef.current;
+        if (container) {
+          container.addEventListener('wheel', stopPropagation);
+          container.addEventListener('touchmove', stopPropagation);
+        }
+        
+        return () => {
+          if (container) {
+            container.removeEventListener('wheel', stopPropagation);
+            container.removeEventListener('touchmove', stopPropagation);
+          }
+        };
+      }, []);
       
       // 처음 화면이 로드될 때 상태 초기화
       useEffect(() => {
@@ -636,7 +656,7 @@
           padding: '0',
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
+          height: '100vh',
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -656,6 +676,7 @@
               position: 'relative',
               WebkitOverflowScrolling: 'touch' // iOS 부드러운 스크롤
             }}
+            onScroll={(e) => e.stopPropagation()}
           >
             {messages.map((message, index) => {
               if (message.type === 'portfolio') {
@@ -693,7 +714,10 @@
                 padding: '20px 20px',
                 borderTop: '1px solid rgba(232, 232, 232, 0.08)',
                 backgroundColor: 'var(--bg-color)',
-                position: 'relative',
+                position: 'sticky',
+                bottom: 0,
+                left: 0,
+                right: 0,
                 zIndex: 2,
                 justifyContent: 'center'
               }}
@@ -737,7 +761,10 @@
                 padding: '20px 20px',
                 borderTop: '1px solid rgba(232, 232, 232, 0.08)',
                 backgroundColor: 'var(--bg-color)',
-                position: 'relative',
+                position: 'sticky',
+                bottom: 0,
+                left: 0,
+                right: 0,
                 zIndex: 2
               }}
             >
