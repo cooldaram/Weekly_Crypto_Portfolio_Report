@@ -29,7 +29,9 @@
                 --negative-color: #f87171;
                 --chart-color: #444b59;
                 --input-bg: #242a34;
-                --send-button: #444b59;
+                --send-button: #3b82f6;
+                --memory-notification-bg: rgba(68, 75, 89, 0.4);
+                --memory-notification-color: rgba(191, 192, 198, 0.9);
             }
 
             * {
@@ -104,6 +106,23 @@
                 color: var(--text-secondary);
             }
 
+            /* 메모리 저장 표시 스타일 */
+            .memory-indicator {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 11px;
+                font-weight: 500;
+                margin-top: 2px;
+                margin-bottom: 8px;
+                padding: 4px 8px;
+                border-radius: 4px;
+                background-color: var(--memory-notification-bg);
+                color: var(--memory-notification-color);
+                width: fit-content;
+                border: 1px solid rgba(191, 192, 198, 0.2);
+            }
+
             /* Media queries for responsive design */
             @media (max-width: 768px) {
                 body {
@@ -115,6 +134,45 @@
                 body {
                     font-size: 12px;
                 }
+            }
+
+            /* 타이핑 로딩 애니메이션 */
+            @keyframes typingWave {
+                0%,
+                100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-5px);
+                }
+            }
+
+            .typing-indicator {
+                display: flex;
+                align-items: center;
+                margin-bottom: 12px;
+                margin-left: 4px;
+                margin-top: 8px;
+            }
+
+            .typing-dot {
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background-color: rgba(232, 232, 232, 0.8);
+                margin: 0 3px;
+            }
+
+            .typing-dot:nth-child(1) {
+                animation: typingWave 1.3s infinite ease-in-out 0s;
+            }
+
+            .typing-dot:nth-child(2) {
+                animation: typingWave 1.3s infinite ease-in-out 0.2s;
+            }
+
+            .typing-dot:nth-child(3) {
+                animation: typingWave 1.3s infinite ease-in-out 0.4s;
             }
         </style>
     </head>
@@ -143,8 +201,28 @@
             // Create a simple React app
             const { useState, useEffect, useRef } = React;
 
+            // 타이핑 표시기 컴포넌트
+            const TypingIndicator = () => {
+                return (
+                    <div
+                        className="typing-indicator"
+                        style={{ alignSelf: "flex-start" }}
+                    >
+                        <div className="typing-dot"></div>
+                        <div className="typing-dot"></div>
+                        <div className="typing-dot"></div>
+                    </div>
+                );
+            };
+
             // Message component
-            const Message = ({ isUser, isReasoning, children, label }) => {
+            const Message = ({
+                isUser,
+                isReasoning,
+                children,
+                label,
+                showMemoryUpdate,
+            }) => {
                 return (
                     <div
                         style={{
@@ -187,6 +265,29 @@
                         >
                             {label}
                         </div>
+
+                        {/* 메모리 업데이트 표시 - 대사 앞에 표시 */}
+                        {!isUser && showMemoryUpdate && (
+                            <div className="memory-indicator">
+                                <svg
+                                    width="10"
+                                    height="10"
+                                    viewBox="0 0 16 16"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M13.3334 4.66667L6.00002 12L2.66669 8.66667"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                                Memory updated
+                            </div>
+                        )}
+
                         <div
                             style={{
                                 whiteSpace: "pre-wrap",
@@ -504,103 +605,99 @@
                 );
             };
 
-            // Main App component
-            const App = () => {
-                // 대화 시나리오 정의
-                const conversationFlow = [
-                    // 첫 번째 사용자 입력과 아이모 응답들
-                    {
-                        userMessage: {
-                            type: "user",
-                            label: "Me",
-                            content:
-                                "Send me a weekly report of all my crypto assets every Monday at 9 AM.",
-                        },
-                        aimoResponses: [
-                            {
-                                type: "reasoning",
-                                label: "Aimo Reasoning",
-                                content:
-                                    "To accomplish this, I need to:\n- Set a scheduler to run every Monday at 09:00\n- Collect trade logs, holdings, and PnL stats\n- Summarize the data into a report\n- Send the report via Gmail",
-                            },
-                            {
-                                type: "agent",
-                                label: "Aimo",
-                                content:
-                                    "Got it! Let's start by scheduling this to run every Monday at 9 AM.",
-                            },
-                            {
-                                type: "reasoning",
-                                label: "Aimo Reasoning",
-                                content:
-                                    "Next, I'll need to fetch your portfolio data using:\n- Trades Tool\n- Inventory Tool\n- Invest Stats Tool",
-                            },
-                            {
-                                type: "agent",
-                                label: "Aimo",
-                                content:
-                                    "Connecting Trades Tool, Inventory Tool, and Invest Stats Tool to collect the necessary data.",
-                            },
-                            {
-                                type: "reasoning",
-                                label: "Aimo Reasoning",
-                                content:
-                                    "Now I need a way to summarize this into a clean weekly report...",
-                            },
-                            {
-                                type: "agent",
-                                label: "Aimo",
-                                content:
-                                    "Adding Report Generator Agent. It'll compile your trades, asset inventory, and PnL stats into a markdown summary.",
-                            },
-                            {
-                                type: "reasoning",
-                                label: "Aimo Reasoning",
-                                content:
-                                    "Finally, the user wants this report delivered via email.",
-                            },
-                            {
-                                type: "agent",
-                                label: "Aimo",
-                                content:
-                                    "Connecting Gmail Tool to deliver the report. I'll prefill the subject and attach the summary.",
-                            },
-                        ],
+            // 전체 대화 시나리오 정의 (변경되지 않음)
+            const ALL_CONVERSATION_DATA = [
+                // 첫 번째 사용자 입력과 아이모 응답들
+                {
+                    userMessage: {
+                        type: "user",
+                        label: "Me",
+                        content:
+                            "Send me a weekly report of all my crypto assets every Monday at 9 AM.",
                     },
-                    // 두 번째 사용자 입력과 아이모 응답들
-                    {
-                        userMessage: {
-                            type: "user",
-                            label: "Me",
+                    aimoResponses: [
+                        {
+                            type: "reasoning",
+                            label: "Aimo Reasoning",
                             content:
-                                "Perfect. Can you send me a preview of this week's report?",
+                                "To accomplish this, I need to:\n- Set a scheduler to run every Monday at 09:00\n- Collect trade logs, holdings, and PnL stats\n- Summarize the data into a report\n- Send the report via Gmail",
                         },
-                        aimoResponses: [
-                            {
-                                type: "agent",
-                                label: "Aimo",
-                                content:
-                                    "Sure! I've just sent your first report as of 09:00 UTC today. Check your Gmail inbox for the summary.",
-                            },
-                            { type: "portfolio" },
-                        ],
+                        {
+                            type: "agent",
+                            label: "Aimo",
+                            content:
+                                "Got it! Let's start by scheduling this to run every Monday at 9 AM.",
+                            showMemoryUpdate: true,
+                        },
+                        {
+                            type: "reasoning",
+                            label: "Aimo Reasoning",
+                            content:
+                                "Next, I'll need to fetch your portfolio data using:\n- Trades Tool\n- Inventory Tool\n- Invest Stats Tool",
+                        },
+                        {
+                            type: "agent",
+                            label: "Aimo",
+                            content:
+                                "Connecting Trades Tool, Inventory Tool, and Invest Stats Tool to collect the necessary data.",
+                        },
+                        {
+                            type: "reasoning",
+                            label: "Aimo Reasoning",
+                            content:
+                                "Now I need a way to summarize this into a clean weekly report...",
+                        },
+                        {
+                            type: "agent",
+                            label: "Aimo",
+                            content:
+                                "Adding Report Generator Agent. It'll compile your trades, asset inventory, and PnL stats into a markdown summary.",
+                        },
+                        {
+                            type: "reasoning",
+                            label: "Aimo Reasoning",
+                            content:
+                                "Finally, the user wants this report delivered via email.",
+                        },
+                        {
+                            type: "agent",
+                            label: "Aimo",
+                            content:
+                                "Connecting Gmail Tool to deliver the report. I'll prefill the subject and attach the summary.",
+                        },
+                    ],
+                },
+                // 두 번째 사용자 입력과 아이모 응답들
+                {
+                    userMessage: {
+                        type: "user",
+                        label: "Me",
+                        content:
+                            "Perfect. Can you send me a preview of this week's report?",
                     },
-                ];
+                    aimoResponses: [
+                        {
+                            type: "agent",
+                            label: "Aimo",
+                            content:
+                                "Sure! I've just sent your first report as of 09:00 UTC today. Check your Gmail inbox for the summary.",
+                        },
+                        { type: "portfolio" },
+                    ],
+                },
+            ];
 
-                // 상태 관리
-                const [displayedMessages, setDisplayedMessages] = useState([]);
-                const [currentScenarioIndex, setCurrentScenarioIndex] =
-                    useState(0);
-                const [currentAimoResponseIndex, setCurrentAimoResponseIndex] =
-                    useState(-1);
-                const [isAimoResponding, setIsAimoResponding] = useState(false);
-                const [userInput, setUserInput] = useState("");
+            // Main App component - 완전히 다시 작성합니다.
+            const App = () => {
+                // 메시지 리스트와 대화 완료 상태만 관리
+                const [messages, setMessages] = useState([]);
                 const [isCompleted, setIsCompleted] = useState(false);
+                const [isProcessing, setIsProcessing] = useState(false);
+                const [currentStep, setCurrentStep] = useState(0);
+                const [inputText, setInputText] = useState(""); // 입력창 텍스트 상태 추가
+                const [isTyping, setIsTyping] = useState(false); // 타이핑 상태 추가
                 const messagesEndRef = useRef(null);
                 const messageContainerRef = useRef(null);
-
-                // 입력 필드 참조
-                const inputRef = useRef(null);
 
                 // 자동 스크롤 함수
                 const scrollToBottom = () => {
@@ -609,122 +706,142 @@
                             behavior: "smooth",
                             block: "end",
                         });
-
-                        // 추가 스크롤 처리를 위한 타임아웃
-                        setTimeout(() => {
-                            window.scrollTo({
-                                top: document.body.scrollHeight,
-                                behavior: "smooth",
-                            });
-                        }, 100);
                     }
                 };
 
                 // 메시지가 추가될 때마다 스크롤
                 useEffect(() => {
-                    // 약간의 지연 후 스크롤하여 DOM이 업데이트될 시간을 줌
-                    const scrollTimer = setTimeout(() => {
-                        scrollToBottom();
-                    }, 50);
+                    scrollToBottom();
+                }, [messages]);
 
-                    return () => clearTimeout(scrollTimer);
-                }, [displayedMessages]);
-
-                // 사용자 메시지 처리
-                const handleUserMessageSubmit = () => {
-                    if (
-                        currentScenarioIndex >= conversationFlow.length ||
-                        !conversationFlow[currentScenarioIndex].userMessage
-                            .content
-                    )
-                        return;
-
-                    const currentUserMessage =
-                        conversationFlow[currentScenarioIndex].userMessage;
-                    setDisplayedMessages([
-                        ...displayedMessages,
-                        currentUserMessage,
-                    ]);
-                    setIsAimoResponding(true);
-                    setCurrentAimoResponseIndex(0);
-                    setUserInput(""); // 입력 필드 초기화
-                };
-
-                // 시나리오 재시작 함수
-                const handleReset = () => {
-                    setDisplayedMessages([]);
-                    setCurrentScenarioIndex(0);
-                    setCurrentAimoResponseIndex(-1);
-                    setIsAimoResponding(false);
-                    setUserInput("");
-                    setIsCompleted(false);
-                };
-
-                // 입력 폼 제출 핸들링
-                const handleSubmit = (e) => {
-                    e.preventDefault();
-                    handleUserMessageSubmit();
-                };
-
-                // 아이모 응답 처리 (일정 시간 간격으로 순차적 표시)
+                // 처음 화면이 로드될 때 상태 초기화
                 useEffect(() => {
-                    if (!isAimoResponding || currentAimoResponseIndex === -1)
-                        return;
+                    resetConversation();
+                }, []);
 
-                    const currentScenario =
-                        conversationFlow[currentScenarioIndex];
+                // currentStep이 변경될 때 입력창 텍스트 업데이트
+                useEffect(() => {
                     if (
-                        !currentScenario ||
-                        currentAimoResponseIndex >=
-                            currentScenario.aimoResponses.length
+                        currentStep < ALL_CONVERSATION_DATA.length &&
+                        !isProcessing
                     ) {
-                        // 현재 시나리오의 모든 응답이 표시됨
-                        setIsAimoResponding(false);
-                        setCurrentAimoResponseIndex(-1);
+                        setInputText(
+                            ALL_CONVERSATION_DATA[currentStep].userMessage
+                                .content,
+                        );
+                    }
+                }, [currentStep, isProcessing]);
 
-                        // 다음 시나리오가 있으면 사용자 입력 활성화
-                        if (
-                            currentScenarioIndex + 1 <
-                            conversationFlow.length
-                        ) {
-                            setTimeout(() => {
-                                setCurrentScenarioIndex(
-                                    currentScenarioIndex + 1,
-                                );
-                                // 입력 필드에 다음 메시지 미리 설정
-                                setUserInput(
-                                    conversationFlow[currentScenarioIndex + 1]
-                                        .userMessage.content,
-                                );
-                                // 입력 필드에 포커스
-                                if (inputRef.current) inputRef.current.focus();
-                            }, 1000); // 1초 후에 다음 대화 준비
+                // 사용자 메시지 처리하고 응답 시작
+                const handleUserMessage = (scenarioIndex) => {
+                    if (isProcessing) return;
+                    setIsProcessing(true);
+
+                    // 입력창 비우기
+                    setInputText("");
+
+                    const scenarioData = ALL_CONVERSATION_DATA[scenarioIndex];
+                    if (!scenarioData) return;
+
+                    // 사용자 메시지 추가
+                    const userMessage = scenarioData.userMessage;
+
+                    // 첫 번째 단계면 이전 메시지 모두 지우고 시작
+                    if (scenarioIndex === 0) {
+                        setMessages([userMessage]);
+                    } else {
+                        setMessages((prev) => [...prev, userMessage]);
+                    }
+
+                    // 타이핑 표시기 활성화
+                    setTimeout(() => {
+                        setIsTyping(true);
+                        // 스크롤 다운
+                        scrollToBottom();
+                    }, 500);
+
+                    // 응답 처리 시작
+                    setTimeout(() => {
+                        processResponses(
+                            scenarioData.aimoResponses,
+                            0,
+                            scenarioIndex,
+                        );
+                    }, 1800); // 로딩 애니메이션을 좀 더 보여주기 위해 약간의 지연
+                };
+
+                // 응답 메시지 순차적으로 처리
+                const processResponses = (
+                    responses,
+                    responseIndex,
+                    scenarioIndex,
+                ) => {
+                    // 첫 번째 응답 처리 직전에 타이핑 표시기 숨기기
+                    if (responseIndex === 0) {
+                        setIsTyping(false);
+                    }
+
+                    if (responseIndex >= responses.length) {
+                        // 모든 응답이 처리됨
+                        setIsProcessing(false);
+
+                        // 다음 시나리오가 있는지 확인
+                        if (scenarioIndex + 1 < ALL_CONVERSATION_DATA.length) {
+                            // 다음 단계로 준비 - 입력창은 비워둠
+                            setCurrentStep(scenarioIndex + 1);
                         } else {
-                            // 모든 시나리오가 완료됨
+                            // 모든 시나리오 완료
                             setIsCompleted(true);
                         }
                         return;
                     }
 
-                    // 일정 시간 후 다음 아이모 응답 표시
-                    const timeoutId = setTimeout(() => {
-                        const nextResponse =
-                            currentScenario.aimoResponses[
-                                currentAimoResponseIndex
-                            ];
-                        setDisplayedMessages((prev) => [...prev, nextResponse]);
-                        setCurrentAimoResponseIndex(
-                            currentAimoResponseIndex + 1,
-                        );
-                    }, 1200); // 1200ms 간격으로 메시지 표시 (이전 800ms에서 변경)
+                    // 각 응답 메시지를 일정 간격으로 표시
+                    setTimeout(() => {
+                        const response = responses[responseIndex];
+                        setMessages((prev) => [...prev, response]);
 
-                    return () => clearTimeout(timeoutId);
-                }, [
-                    isAimoResponding,
-                    currentAimoResponseIndex,
-                    currentScenarioIndex,
-                    displayedMessages,
-                ]);
+                        // 다음 응답 전에 타이핑 표시기 활성화 (마지막 응답이 아닌 경우)
+                        if (responseIndex + 1 < responses.length) {
+                            setTimeout(() => {
+                                setIsTyping(true);
+                                scrollToBottom();
+                            }, 700); // 이전 메시지가 표시된 후 약간 기다렸다가 로딩 표시
+
+                            setTimeout(() => {
+                                setIsTyping(false);
+                                // 다음 응답 처리
+                                processResponses(
+                                    responses,
+                                    responseIndex + 1,
+                                    scenarioIndex,
+                                );
+                            }, 2000); // 로딩 표시가 좀 더 자연스럽게 보이도록 타이밍 조정
+                        } else {
+                            // 마지막 응답이면 바로 다음 처리
+                            processResponses(
+                                responses,
+                                responseIndex + 1,
+                                scenarioIndex,
+                            );
+                        }
+                    }, 800); // 메시지 표시 간격 조정
+                };
+
+                // 대화 재설정
+                const resetConversation = () => {
+                    setMessages([]);
+                    setIsCompleted(false);
+                    setIsProcessing(false);
+                    setCurrentStep(0);
+
+                    // 첫 번째 메시지 텍스트로 입력창 초기화
+                    if (ALL_CONVERSATION_DATA.length > 0) {
+                        setInputText(
+                            ALL_CONVERSATION_DATA[0].userMessage.content,
+                        );
+                    }
+                };
 
                 return (
                     <div
@@ -756,11 +873,11 @@
                                 position: "relative",
                             }}
                         >
-                            {displayedMessages.map((message, index) => {
+                            {messages.map((message, index) => {
                                 if (message.type === "portfolio") {
                                     return (
                                         <div
-                                            key={`portfolio-container-${index}`}
+                                            key={`portfolio-${index}`}
                                             style={{
                                                 width: "100%",
                                                 minHeight: "500px",
@@ -768,7 +885,6 @@
                                             }}
                                         >
                                             <PortfolioPreview
-                                                key={`portfolio-${index}`}
                                                 isVisible={true}
                                             />
                                         </div>
@@ -783,18 +899,25 @@
                                             message.type === "reasoning"
                                         }
                                         label={message.label}
+                                        showMemoryUpdate={
+                                            message.showMemoryUpdate
+                                        }
                                     >
                                         {message.content}
                                     </Message>
                                 );
                             })}
+
+                            {/* 타이핑 표시기 */}
+                            {isTyping && <TypingIndicator />}
+
                             <div
                                 ref={messagesEndRef}
-                                style={{ height: "20px" }}
+                                style={{ height: "40px" }}
                             />
                         </div>
 
-                        {/* 입력 폼 표시 (시나리오 진행 중일 때) 또는 재시작 버튼 표시 (시나리오 완료되었을 때) */}
+                        {/* 입력 폼 또는 재시작 버튼 */}
                         {isCompleted ? (
                             <div
                                 style={{
@@ -809,7 +932,7 @@
                                 }}
                             >
                                 <button
-                                    onClick={handleReset}
+                                    onClick={resetConversation}
                                     style={{
                                         padding: "10px 24px",
                                         background: "var(--send-button)",
@@ -828,7 +951,7 @@
                                         e.currentTarget.style.transform =
                                             "scale(1.05)";
                                         e.currentTarget.style.backgroundColor =
-                                            "#515A69";
+                                            "#60A5FA";
                                     }}
                                     onMouseOut={(e) => {
                                         e.currentTarget.style.transform =
@@ -837,126 +960,105 @@
                                             "var(--send-button)";
                                     }}
                                 >
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 16 16"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            d="M1 1.33333V6.66667H6.33333"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <path
-                                            d="M2.34 10C2.7723 11.3821 3.5915 12.5971 4.7147 13.4667C5.8379 14.3363 7.2095 14.8202 8.6253 14.8486C10.0402 14.877 11.4279 14.4487 12.5829 13.6216C13.7379 12.7944 14.6038 11.6107 15.0872 10.2503C15.5706 8.89 15.6369 7.41789 15.2783 6.05994C14.9198 4.70199 14.1537 3.4916 13.0852 2.61176C12.0166 1.73193 10.6965 1.22151 9.3084 1.16767C7.9203 1.11384 6.5645 1.52081 5.44 2.34"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
                                     Retry
                                 </button>
                             </div>
                         ) : (
-                            !isAimoResponding &&
-                            currentScenarioIndex < conversationFlow.length && (
-                                <form
-                                    onSubmit={handleSubmit}
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleUserMessage(currentStep);
+                                }}
+                                style={{
+                                    display: "flex",
+                                    padding: "20px 20px",
+                                    borderTop:
+                                        "1px solid rgba(232, 232, 232, 0.08)",
+                                    backgroundColor: "var(--bg-color)",
+                                    position: "relative",
+                                    zIndex: 2,
+                                }}
+                            >
+                                <input
+                                    type="text"
+                                    value={inputText}
+                                    readOnly={true}
                                     style={{
-                                        display: "flex",
-                                        padding: "20px 20px",
-                                        borderTop:
-                                            "1px solid rgba(232, 232, 232, 0.08)",
-                                        backgroundColor: "var(--bg-color)",
-                                        position: "relative",
-                                        zIndex: 2,
+                                        flex: 1,
+                                        padding: "8px 12px",
+                                        borderRadius: "8px",
+                                        border: "1px solid rgba(232, 232, 232, 0.15)",
+                                        backgroundColor: "var(--input-bg)",
+                                        color: "var(--text-primary)",
+                                        fontSize: "14px",
+                                        outline: "none",
+                                        marginRight: "10px",
+                                        boxShadow:
+                                            "inset 0 1px 3px rgba(0, 0, 0, 0.1)",
                                     }}
-                                >
-                                    <input
-                                        ref={inputRef}
-                                        type="text"
-                                        value={
-                                            userInput ||
-                                            conversationFlow[
-                                                currentScenarioIndex
-                                            ]?.userMessage?.content ||
-                                            ""
-                                        }
-                                        readOnly={true}
-                                        style={{
-                                            flex: 1,
-                                            padding: "8px 12px",
-                                            borderRadius: "8px",
-                                            border: "1px solid rgba(232, 232, 232, 0.15)",
-                                            backgroundColor: "var(--input-bg)",
-                                            color: "var(--text-primary)",
-                                            fontSize: "14px",
-                                            outline: "none",
-                                            marginRight: "10px",
-                                            boxShadow:
-                                                "inset 0 1px 3px rgba(0, 0, 0, 0.1)",
-                                        }}
-                                    />
-                                    <button
-                                        type="submit"
-                                        style={{
-                                            width: "42px",
-                                            height: "42px",
-                                            borderRadius: "8px",
-                                            border: "none",
-                                            backgroundColor:
-                                                "var(--send-button)",
-                                            color: "var(--text-primary)",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            cursor: "pointer",
-                                            transition: "all 0.2s ease",
-                                        }}
-                                        disabled={isAimoResponding}
-                                        onMouseOver={(e) => {
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isProcessing}
+                                    style={{
+                                        width: "42px",
+                                        height: "42px",
+                                        borderRadius: "8px",
+                                        border: "none",
+                                        backgroundColor: isProcessing
+                                            ? "var(--secondary-bg)"
+                                            : "var(--send-button)",
+                                        color: "white",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: isProcessing
+                                            ? "default"
+                                            : "pointer",
+                                        transition: "all 0.2s ease",
+                                        opacity: isProcessing ? 0.6 : 1,
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (!isProcessing) {
                                             e.currentTarget.style.transform =
                                                 "scale(1.05)";
                                             e.currentTarget.style.backgroundColor =
-                                                "#515A69";
-                                        }}
-                                        onMouseOut={(e) => {
+                                                "#60A5FA";
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (!isProcessing) {
                                             e.currentTarget.style.transform =
                                                 "scale(1)";
                                             e.currentTarget.style.backgroundColor =
                                                 "var(--send-button)";
-                                        }}
+                                        }
+                                    }}
+                                >
+                                    <svg
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
                                     >
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                d="M22 2L11 13"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                            <path
-                                                d="M22 2L15 22L11 13L2 9L22 2Z"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                        </svg>
-                                    </button>
-                                </form>
-                            )
+                                        <path
+                                            d="M22 2L11 13"
+                                            stroke="white"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path
+                                            d="M22 2L15 22L11 13L2 9L22 2Z"
+                                            stroke="white"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                </button>
+                            </form>
                         )}
                     </div>
                 );
