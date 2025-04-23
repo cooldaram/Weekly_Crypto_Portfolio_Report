@@ -595,11 +595,11 @@
             targetElement = targetElement.parentElement;
           }
           
-          // 메시지 컨테이너 외부에서 발생한 스크롤은 차단
-          if (!isInsideContainer) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
+          // 메시지 컨테이너 외부에서 발생한 스크롤은 차단 - 노션 임베딩 시 문제가 됨
+          // if (!isInsideContainer) {
+          //   e.preventDefault();
+          //   e.stopPropagation();
+          // }
         };
         
         // 터치 이벤트 처리
@@ -615,30 +615,32 @@
             targetElement = targetElement.parentElement;
           }
           
-          if (!isInsideContainer) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
+          // 컨테이너 외부 터치 이벤트 차단 제거 - 노션 임베딩 시 문제가 됨
+          // if (!isInsideContainer) {
+          //   e.preventDefault();
+          //   e.stopPropagation();
+          // }
         };
         
-        // 문서 전체에 스크롤 이벤트 리스너 추가
-        document.addEventListener('wheel', allowContainerScroll, { passive: false });
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('scroll', preventAllScroll, { passive: false });
+        // 문서 전체에 스크롤 이벤트 리스너 추가 - 노션 임베딩 시 문제가 됨
+        // document.addEventListener('wheel', allowContainerScroll, { passive: false });
+        // document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        // document.addEventListener('scroll', preventAllScroll, { passive: false });
         
-        // iframe 내부에서 최상위 스크롤 차단
-        if (window.parent && window.parent !== window) {
-          window.addEventListener('wheel', preventAllScroll, { passive: false });
-        }
+        // iframe 내부에서 최상위 스크롤 차단 - 노션 임베딩 시 문제가 됨
+        // if (window.parent && window.parent !== window) {
+        //   window.addEventListener('wheel', preventAllScroll, { passive: false });
+        // }
         
         return () => {
-          document.removeEventListener('wheel', allowContainerScroll);
-          document.removeEventListener('touchmove', handleTouchMove);
-          document.removeEventListener('scroll', preventAllScroll);
+          // 이벤트 리스너 제거 부분도 주석 처리
+          // document.removeEventListener('wheel', allowContainerScroll);
+          // document.removeEventListener('touchmove', handleTouchMove);
+          // document.removeEventListener('scroll', preventAllScroll);
           
-          if (window.parent && window.parent !== window) {
-            window.removeEventListener('wheel', preventAllScroll);
-          }
+          // if (window.parent && window.parent !== window) {
+          //   window.removeEventListener('wheel', preventAllScroll);
+          // }
         };
       }, []);
       
