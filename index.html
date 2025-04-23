@@ -144,7 +144,7 @@
       padding: 15px;
       border-top: 1px solid rgba(232, 232, 232, 0.08);
       background-color: var(--bg-color);
-      height: 70px; /* 입력 영역의 고정 높이 */
+      height: 70px;
     }
     
     .retry-button {
@@ -169,6 +169,7 @@
     
     .input-form {
       display: flex;
+      height: 100%;
     }
     
     .text-input {
@@ -182,11 +183,12 @@
       outline: none;
       margin-right: 10px;
       box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: 100%;
     }
     
     .send-button {
       width: 42px;
-      height: 42px;
+      height: 100%;
       border-radius: 8px;
       border: none;
       background-color: var(--send-button);
@@ -229,14 +231,15 @@
     const Message = ({ isUser, isReasoning, children, label, showMemoryUpdate }) => {
       return (
         <div style={{
-          maxWidth: '100%',
+          maxWidth: '80%',
+          width: 'auto',
           alignSelf: isUser ? 'flex-end' : 'flex-start',
           backgroundColor: isReasoning 
             ? 'transparent' 
             : isUser 
               ? 'var(--user-bubble)' 
               : 'transparent',
-          padding: isReasoning ? '8px 0 8px 10px' : '14px',
+          padding: isReasoning ? '8px' : '14px',
           borderRadius: '10px',
           marginBottom: '12px',
           border: isReasoning ? 'none' : '1px solid',
@@ -795,7 +798,6 @@
                   handleUserMessage(currentStep);
                 }}
                 className="input-form"
-                style={{ display: 'flex', alignItems: 'center' }}
               >
                 <input
                   type="text"
