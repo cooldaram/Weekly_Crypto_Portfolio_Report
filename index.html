@@ -526,9 +526,29 @@
       const [isProcessing, setIsProcessing] = useState(false);
       const [currentStep, setCurrentStep] = useState(0);
       const [inputText, setInputText] = useState(""); // 입력창 텍스트 상태 추가
+      const [hasNewMessages, setHasNewMessages] = useState(false);
+      const [isBottomVisible, setIsBottomVisible] = useState(true);
       const [isDemoStarted, setIsDemoStarted] = useState(false);
       const messagesEndRef = useRef(null);
+      const prevCountRef = useRef(0);
       const messageContainerRef = useRef(null);
+      
+      // observer로 하단 요소 감지
+      useEffect(() => {
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            setIsBottomVisible(entry.isIntersecting);
+            if (entry.isIntersecting) {
+              setHasNewMessages(false);
+            }
+          },
+          { root: messageContainerRef.current, threshold: 1.0 }
+        );
+        if (messagesEndRef.current) {
+          observer.observe(messagesEndRef.current);
+        }
+        return () => observer.disconnect();
+      }, []);
       
       // 자동 스크롤 함수
       const scrollToBottom = () => {
@@ -540,11 +560,14 @@
         }
       };
       
-      // 메시지가 추가될 때마다 자동 스크롤
-      // useEffect(() => {
-      //   setTimeout(scrollToBottom, 100);
-      // }, [messages]);
-            
+      // 새 메시지 감지하여 New Messages 오버레이 토글
+      useEffect(() => {
+        if (messages.length > prevCountRef.current && !isBottomVisible) {
+          setHasNewMessages(true);
+        }
+        prevCountRef.current = messages.length;
+      }, [messages, isBottomVisible]);
+      
       // 처음 화면이 로드될 때 상태 초기화
       useEffect(() => {
         resetConversation();
@@ -691,7 +714,7 @@
       };
       
       return (
-        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div 
             id="message-container"
             ref={messageContainerRef}
@@ -720,17 +743,41 @@
             })}
             
             <div ref={messagesEndRef} style={{ height: '40px' }} />
-            {/* Demo Start overlay when demo not begun */}
-            {!isDemoStarted && messages.length === 0 && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-                <button onClick={() => { setIsDemoStarted(true); handleUserMessage(0); }} className="retry-button">
-                  Demo Start
-                </button>
-              </div>
-            )}
           </div>
-          
-          {/* 입력 폼 또는 재시작 버튼 */}
+
+          {/* Demo Start fixed overlay */}
+          {!isDemoStarted && messages.length === 0 && (
+            <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%, -50%)', zIndex:1000 }}>
+              <button
+                onClick={() => { setIsDemoStarted(true); handleUserMessage(0); }}
+                className="retry-button"
+              >
+                Demo Start
+              </button>
+            </div>
+          )}
+
+          {/* New Messages fixed overlay above input area */}
+          {hasNewMessages && (
+            <div style={{ position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%)', zIndex:1000 }}>
+              <button
+                onClick={() => { scrollToBottom(); setHasNewMessages(false); }}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--send-button)',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                New Messages
+              </button>
+            </div>
+          )}
+
+          {/* 입력 폼 또는 재시작 버튼: 항상 하단 고정 영역 */}
           <div id="input-area">
             {isCompleted ? (
               <div style={{ display: 'flex', justifyContent: 'center' }}>
