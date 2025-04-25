@@ -686,7 +686,7 @@
             // auto-send next user message after a short delay
             setTimeout(() => {
               handleUserMessage(nextIndex);
-            }, 1000);
+            }, 2000);
           } else {
             setIsCompleted(true);
           }
@@ -701,7 +701,7 @@
           // 다음 응답 처리
           processResponses(responses, responseIndex + 1, scenarioIndex);
           
-        }, 1200); // 메시지 표시 간격 조정
+        }, 2000); // 메시지 표시 간격 조정
       };
       
       // 대화 재설정
