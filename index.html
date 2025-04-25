@@ -1,1147 +1,833 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Crypto Portfolio Weekly Report</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypto Portfolio Weekly Report</title>
+  
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #1A1C1E;
+      --card-bg: #242A34;
+      --secondary-bg: #444B59;
+      --text-primary: #E8E8E8;
+      --text-secondary: #BFC0C6;
+      --accent-color: #444B59;
+      --border-color: #444B59;
+      --reasoning-color: #8A8D95;
+      --user-bubble: #303640;
+      --agent-bubble-border: rgba(232, 232, 232, 0.15);
+      --positive-color: #4ADE80;
+      --negative-color: #F87171;
+      --chart-color: #444B59;
+      --input-bg: #242A34;
+      --send-button: #3B82F6;
+      --memory-notification-bg: rgba(68, 75, 89, 0.4);
+      --memory-notification-color: rgba(191, 192, 198, 0.9);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html, body {
+      height: 100%;
+      overflow: auto;
+      background-color: var(--bg-color);
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+    }
+    
+    #root {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      max-width: 750px;
+      position: relative;
+      flex-direction: column;
+    }
+    
+    /* Custom scrollbar - only visible when user scrolls */
+    #message-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #message-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    #message-container::-webkit-scrollbar-thumb {
+      background: var(--secondary-bg);
+      border-radius: 3px;
+      opacity: 0.5;
+    }
+    
+    #message-container::-webkit-scrollbar-thumb:hover {
+      background: #5A6275;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    /* Fallback styles in case React doesn't load */
+    .chat-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* 메모리 저장 표시 스타일 */
+    .memory-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 2px;
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: var(--memory-notification-bg);
+      color: var(--memory-notification-color);
+      width: fit-content;
+      border: 1px solid rgba(191, 192, 198, 0.2);
+    }
+    
+    /* Media queries for responsive design */
+    @media (max-width: 768px) {
+      body {
+        font-size: 13px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        font-size: 12px;
+      }
+    }
+    
+    #message-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      -webkit-overflow-scrolling: touch;
+      height: calc(100% - 70px); /* 입력 영역 높이를 제외한 나머지 높이 */
+    }
+    
+    #input-area {
+      padding: 15px;
+      border-top: 1px solid rgba(232, 232, 232, 0.08);
+      background-color: var(--bg-color);
+      height: 70px;
+    }
+    
+    .retry-button {
+      padding: 10px 24px;
+      background: var(--send-button);
+      color: var(--text-primary);
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .retry-button:hover {
+      transform: scale(1.05);
+      background-color: #60A5FA;
+    }
+    
+    .input-form {
+      display: flex;
+      height: 100%;
+    }
+    
+    .text-input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(232, 232, 232, 0.15);
+      background-color: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      margin-right: 10px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: 100%;
+    }
+    
+    .send-button {
+      width: 42px;
+      height: 100%;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--send-button);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .send-button:hover {
+      transform: scale(1.05);
+      background-color: #60A5FA;
+    }
+    
+    .send-button:disabled {
+      background-color: var(--secondary-bg);
+      cursor: default;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
-        <!-- Font -->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
-            rel="stylesheet"
-        />
-
-        <style>
-            :root {
-                --bg-color: #1a1c1e;
-                --card-bg: #242a34;
-                --secondary-bg: #444b59;
-                --text-primary: #e8e8e8;
-                --text-secondary: #bfc0c6;
-                --accent-color: #444b59;
-                --border-color: #444b59;
-                --reasoning-color: #8a8d95;
-                --user-bubble: #303640;
-                --agent-bubble-border: rgba(232, 232, 232, 0.15);
-                --positive-color: #4ade80;
-                --negative-color: #f87171;
-                --chart-color: #444b59;
-                --input-bg: #242a34;
-                --send-button: #3b82f6;
-                --memory-notification-bg: rgba(68, 75, 89, 0.4);
-                --memory-notification-color: rgba(191, 192, 198, 0.9);
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Simple chat UI implementation -->
+  <script type="text/babel">
+    // Create a simple React app
+    const { useState, useEffect, useRef } = React;
+    
+    // Message component
+    const Message = ({ isUser, isReasoning, children, label, showMemoryUpdate }) => {
+      return (
+        <div style={{
+          maxWidth: '80%',
+          width: 'auto',
+          alignSelf: isUser ? 'flex-end' : 'flex-start',
+          backgroundColor: isReasoning 
+            ? 'transparent' 
+            : isUser 
+              ? 'var(--user-bubble)' 
+              : 'transparent',
+          padding: isReasoning ? '8px' : '14px',
+          borderRadius: '10px',
+          marginBottom: '12px',
+          border: isReasoning ? 'none' : '1px solid',
+          borderColor: isUser ? 'rgba(232, 232, 232, 0.1)' : 'var(--agent-bubble-border)',
+          boxShadow: isReasoning ? 'none' : isUser ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+          animation: 'fadeIn 0.3s ease forwards',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word'
+        }}>
+          <div style={{
+            fontSize: '11px',
+            fontWeight: '500',
+            marginBottom: '4px',
+            color: isUser ? 'var(--text-secondary)' : isReasoning ? 'var(--reasoning-color)' : 'var(--text-secondary)',
+            textAlign: isUser ? 'right' : 'left'
+          }}>
+            {label}
+          </div>
+          
+          {/* 메모리 업데이트 표시 - 대사 앞에 표시 */}
+          {!isUser && showMemoryUpdate && (
+            <div className="memory-indicator">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13.3334 4.66667L6.00002 12L2.66669 8.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Memory updated
+            </div>
+          )}
+          
+          <div style={{
+            whiteSpace: 'pre-wrap',
+            fontStyle: isReasoning ? 'italic' : 'normal',
+            color: isReasoning ? 'var(--reasoning-color)' : 'var(--text-primary)',
+            lineHeight: '1.5',
+            fontSize: '14px',
+            fontWeight: '400'
+          }}>
+            {children}
+          </div>
+        </div>
+      );
+    };
+    
+    // Asset card component
+    const AssetCard = ({ asset, icon, amount, value, change }) => {
+      const isPositive = change > 0;
+      
+      return (
+        <div style={{
+          backgroundColor: 'var(--secondary-bg)',
+          borderRadius: '8px',
+          padding: '12px',
+          border: '1px solid rgba(232, 232, 232, 0.05)'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '6px'
+          }}>
+            <div style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              background: 'var(--secondary-bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '8px',
+              fontWeight: '500',
+              color: 'var(--text-primary)',
+              border: '1px solid rgba(232, 232, 232, 0.2)',
+              fontSize: '11px'
+            }}>
+              {icon}
+            </div>
+            <div style={{
+              fontWeight: '500',
+              color: 'var(--text-primary)',
+              fontSize: '14px'
+            }}>
+              {asset}
+            </div>
+          </div>
+          
+          <div style={{
+            fontSize: '15px',
+            fontWeight: '500',
+            marginBottom: '2px',
+            color: 'var(--text-primary)'
+          }}>
+            {amount}
+          </div>
+          
+          <div style={{
+            fontSize: '12px',
+            color: 'var(--text-secondary)',
+            marginBottom: '6px'
+          }}>
+            {value}
+          </div>
+          
+          <div style={{
+            display: 'inline-block',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: '400',
+            backgroundColor: isPositive ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
+            color: isPositive ? 'var(--positive-color)' : 'var(--negative-color)'
+          }}>
+            {isPositive ? '+' : ''}{change}%
+          </div>
+        </div>
+      );
+    };
+    
+    // Chart component
+    const PerformanceChart = () => {
+      const data = [60, 75, 45, 65, 80, 70, 85];
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      
+      return (
+        <div style={{ marginTop: '20px' }}>
+          <div style={{ fontSize: '13px', fontWeight: '500', marginBottom: '10px', color: 'var(--text-primary)' }}>
+            Weekly Performance
+          </div>
+          <div style={{ 
+            height: '120px', 
+            display: 'flex',
+            alignItems: 'flex-end',
+            position: 'relative',
+            gap: '12px',
+            marginBottom: '25px'
+          }}>
+            {data.map((value, index) => (
+              <div 
+                key={index} 
+                style={{ 
+                  flex: 1,
+                  position: 'relative',
+                  height: '120px', 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end'
+                }}
+              >
+                <div style={{
+                  height: `${value}%`,
+                  background: 'var(--chart-color)',
+                  borderRadius: '1px',
+                  opacity: 0.5,
+                  width: '100%',
+                  maxWidth: '14px',
+                  margin: '0 auto'
+                }}></div>
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-20px',
+                  left: 0,
+                  right: 0,
+                  fontSize: '10px',
+                  color: 'var(--text-secondary)',
+                  textAlign: 'center'
+                }}>
+                  {days[index]}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+    
+    // Portfolio preview component
+    const PortfolioPreview = ({ isVisible }) => {
+      if (!isVisible) return null;
+      
+      return (
+        <div style={{
+          backgroundColor: 'var(--card-bg)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '20px',
+          border: '1px solid var(--border-color)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+          animation: 'fadeIn 0.5s ease',
+          display: 'block',
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '14px',
+            flexWrap: 'wrap',
+            gap: '6px'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: '500',
+              color: 'var(--text-primary)'
+            }}>
+              Weekly Crypto Portfolio Report
+            </div>
+            <div style={{
+              fontSize: '11px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: 'var(--secondary-bg)',
+              color: 'var(--text-secondary)'
+            }}>
+              Monday, July 29, 2023 - 09:00 UTC
+            </div>
+          </div>
+          
+          <div style={{
+            height: '1px',
+            backgroundColor: 'var(--border-color)',
+            marginBottom: '16px',
+            opacity: 0.5
+          }}></div>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+            gap: '10px',
+            marginBottom: '16px'
+          }}>
+            <AssetCard asset="Bitcoin" icon="BTC" amount="1.245 BTC" value="$39,840.25" change={5.2} />
+            <AssetCard asset="Ethereum" icon="ETH" amount="12.5 ETH" value="$21,375.00" change={3.8} />
+            <AssetCard asset="Solana" icon="SOL" amount="145 SOL" value="$8,700.00" change={-2.1} />
+            <AssetCard asset="Polkadot" icon="DOT" amount="320 DOT" value="$1,920.00" change={1.4} />
+          </div>
+          
+          <PerformanceChart />
+          
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: 'var(--secondary-bg)',
+            padding: '14px',
+            borderRadius: '8px',
+            marginTop: '16px',
+            border: '1px solid rgba(232, 232, 232, 0.05)'
+          }}>
+            <div style={{ fontWeight: '500', color: 'var(--text-primary)', fontSize: '14px' }}>Total Portfolio Value</div>
+            <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>$71,835.25</div>
+          </div>
+        </div>
+      );
+    };
+    
+    // 전체 대화 시나리오 정의 (변경되지 않음)
+    const ALL_CONVERSATION_DATA = [
+      // 첫 번째 사용자 입력과 아이모 응답들
+      {
+        userMessage: { type: 'user', label: 'Me', content: 'Send me a weekly report of all my crypto assets every Monday at 9 AM.' },
+        aimoResponses: [
+          { type: 'reasoning', label: 'Aimo Reasoning', content: "To accomplish this, I need to:\n- Set a scheduler to run every Monday at 09:00\n- Collect trade logs, holdings, and PnL stats\n- Summarize the data into a report\n- Send the report via Gmail" },
+          { type: 'agent', label: 'Aimo', content: "Got it! Let's start by scheduling this to run every Monday at 9 AM.", showMemoryUpdate: true },
+          { type: 'reasoning', label: 'Aimo Reasoning', content: "Next, I'll need to fetch your portfolio data using:\n- Trades Tool\n- Inventory Tool\n- Invest Stats Tool" },
+          { type: 'agent', label: 'Aimo', content: "Connecting Trades Tool, Inventory Tool, and Invest Stats Tool to collect the necessary data." },
+          { type: 'reasoning', label: 'Aimo Reasoning', content: "Now I need a way to summarize this into a clean weekly report..." },
+          { type: 'agent', label: 'Aimo', content: "Adding Report Generator Agent. It'll compile your trades, asset inventory, and PnL stats into a markdown summary." },
+          { type: 'reasoning', label: 'Aimo Reasoning', content: "Finally, the user wants this report delivered via email." },
+          { type: 'agent', label: 'Aimo', content: "Connecting Gmail Tool to deliver the report. I'll prefill the subject and attach the summary." }
+        ]
+      },
+      // 두 번째 사용자 입력과 아이모 응답들
+      {
+        userMessage: { type: 'user', label: 'Me', content: "Perfect. Can you send me a preview of this week's report?" },
+        aimoResponses: [
+          { type: 'agent', label: 'Aimo', content: "Sure! I've just sent your first report as of 09:00 UTC today. Check your Gmail inbox for the summary." },
+          { type: 'portfolio' }
+        ]
+      }
+    ];
+    
+    // Main App component
+    const App = () => {
+      // 메시지 리스트와 대화 완료 상태만 관리
+      const [messages, setMessages] = useState([]);
+      const [isCompleted, setIsCompleted] = useState(false);
+      const [isProcessing, setIsProcessing] = useState(false);
+      const [currentStep, setCurrentStep] = useState(0);
+      const [inputText, setInputText] = useState(""); // 입력창 텍스트 상태 추가
+      const [hasNewMessages, setHasNewMessages] = useState(false);
+      const [isBottomVisible, setIsBottomVisible] = useState(true);
+      const [isDemoStarted, setIsDemoStarted] = useState(false);
+      const messagesEndRef = useRef(null);
+      const prevCountRef = useRef(0);
+      const messageContainerRef = useRef(null);
+      
+      // observer로 하단 요소 감지
+      useEffect(() => {
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            setIsBottomVisible(entry.isIntersecting);
+            if (entry.isIntersecting) {
+              setHasNewMessages(false);
             }
-
-            * {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
+          },
+          { root: messageContainerRef.current, threshold: 1.0 }
+        );
+        if (messagesEndRef.current) {
+          observer.observe(messagesEndRef.current);
+        }
+        return () => observer.disconnect();
+      }, []);
+      
+      // 자동 스크롤 함수
+      const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end' 
+          });
+        }
+      };
+      
+      // 새 메시지 감지하여 New Messages 오버레이 토글
+      useEffect(() => {
+        if (messages.length > prevCountRef.current && !isBottomVisible) {
+          setHasNewMessages(true);
+        }
+        prevCountRef.current = messages.length;
+      }, [messages, isBottomVisible]);
+      
+      // 처음 화면이 로드될 때 상태 초기화
+      useEffect(() => {
+        resetConversation();
+        
+        // 모든 스크롤 이벤트를 차단하는 함수
+        const preventAllScroll = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+        
+        // 메시지 컨테이너 내부에서만 스크롤 허용하는 함수
+        const allowContainerScroll = (e) => {
+          // 이벤트가 발생한 요소가 메시지 컨테이너 내부인지 확인
+          let targetElement = e.target;
+          let isInsideContainer = false;
+          
+          while (targetElement != null) {
+            if (targetElement.id === 'message-container') {
+              isInsideContainer = true;
+              break;
             }
-
-            html,
-            body {
-                height: 100%;
-                overflow: hidden;
-                background-color: var(--bg-color);
+            targetElement = targetElement.parentElement;
+          }
+          
+          // 메시지 컨테이너 외부에서 발생한 스크롤은 차단 - 노션 임베딩 시 문제가 됨
+          // if (!isInsideContainer) {
+          //   e.preventDefault();
+          //   e.stopPropagation();
+          // }
+        };
+        
+        // 터치 이벤트 처리
+        const handleTouchMove = (e) => {
+          let targetElement = e.target;
+          let isInsideContainer = false;
+          
+          while (targetElement != null) {
+            if (targetElement.id === 'message-container') {
+              isInsideContainer = true;
+              break;
             }
-
-            body {
-                font-family: "Inter", sans-serif;
-                color: var(--text-primary);
-                font-size: 14px;
-                font-weight: 400;
-                line-height: 1.5;
-                display: flex;
-                justify-content: center;
-            }
-
-            #root {
-                display: flex;
-                width: 100%;
-                height: 100%;
-                max-width: 750px;
-                position: relative;
-                flex-direction: column;
-            }
-
-            /* Custom scrollbar - only visible when user scrolls */
-            #message-container::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            #message-container::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            #message-container::-webkit-scrollbar-thumb {
-                background: var(--secondary-bg);
-                border-radius: 3px;
-                opacity: 0.5;
-            }
-
-            #message-container::-webkit-scrollbar-thumb:hover {
-                background: #5a6275;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .fade-in {
-                animation: fadeIn 0.3s ease-out forwards;
-            }
-
-            /* Fallback styles in case React doesn't load */
-            .chat-container {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-
-            /* 메모리 저장 표시 스타일 */
-            .memory-indicator {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                font-size: 11px;
-                font-weight: 500;
-                margin-top: 2px;
-                margin-bottom: 8px;
-                padding: 4px 8px;
-                border-radius: 4px;
-                background-color: var(--memory-notification-bg);
-                color: var(--memory-notification-color);
-                width: fit-content;
-                border: 1px solid rgba(191, 192, 198, 0.2);
-            }
-
-            /* Media queries for responsive design */
-            @media (max-width: 768px) {
-                body {
-                    font-size: 13px;
-                }
-            }
-
-            @media (max-width: 480px) {
-                body {
-                    font-size: 12px;
-                }
-            }
-
-            #message-container {
-                flex: 1;
-                overflow-y: auto;
-                overflow-x: hidden;
-                display: flex;
-                flex-direction: column;
-                padding: 15px;
-                -webkit-overflow-scrolling: touch;
-                height: calc(
-                    100% - 70px
-                ); /* 입력 영역 높이를 제외한 나머지 높이 */
-            }
-
-            #input-area {
-                padding: 15px;
-                border-top: 1px solid rgba(232, 232, 232, 0.08);
-                background-color: var(--bg-color);
-                height: 70px;
-            }
-
-            .retry-button {
-                padding: 10px 24px;
-                background: var(--send-button);
-                color: var(--text-primary);
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .retry-button:hover {
-                transform: scale(1.05);
-                background-color: #60a5fa;
-            }
-
-            .input-form {
-                display: flex;
-                height: 100%;
-            }
-
-            .text-input {
-                flex: 1;
-                padding: 8px 12px;
-                border-radius: 8px;
-                border: 1px solid rgba(232, 232, 232, 0.15);
-                background-color: var(--input-bg);
-                color: var(--text-primary);
-                font-size: 14px;
-                outline: none;
-                margin-right: 10px;
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-                height: 100%;
-            }
-
-            .send-button {
-                width: 42px;
-                height: 100%;
-                border-radius: 8px;
-                border: none;
-                background-color: var(--send-button);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .send-button:hover {
-                transform: scale(1.05);
-                background-color: #60a5fa;
-            }
-
-            .send-button:disabled {
-                background-color: var(--secondary-bg);
-                cursor: default;
-                opacity: 0.6;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="root"></div>
-
-        <!-- React -->
-        <script
-            src="https://unpkg.com/react@18/umd/react.development.js"
-            crossorigin
-        ></script>
-        <script
-            src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
-            crossorigin
-        ></script>
-
-        <!-- Babel -->
-        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-        <!-- Simple chat UI implementation -->
-        <script type="text/babel">
-            // Create a simple React app
-            const { useState, useEffect, useRef } = React;
-
-            // Message component
-            const Message = ({
-                isUser,
-                isReasoning,
-                children,
-                label,
-                showMemoryUpdate,
-            }) => {
+            targetElement = targetElement.parentElement;
+          }
+          
+          // 컨테이너 외부 터치 이벤트 차단 제거 - 노션 임베딩 시 문제가 됨
+          // if (!isInsideContainer) {
+          //   e.preventDefault();
+          //   e.stopPropagation();
+          // }
+        };
+        
+        // 문서 전체에 스크롤 이벤트 리스너 추가 - 노션 임베딩 시 문제가 됨
+        // document.addEventListener('wheel', allowContainerScroll, { passive: false });
+        // document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        // document.addEventListener('scroll', preventAllScroll, { passive: false });
+        
+        // iframe 내부에서 최상위 스크롤 차단 - 노션 임베딩 시 문제가 됨
+        // if (window.parent && window.parent !== window) {
+        //   window.addEventListener('wheel', preventAllScroll, { passive: false });
+        // }
+        
+        return () => {
+          // 이벤트 리스너 제거 부분도 주석 처리
+          // document.removeEventListener('wheel', allowContainerScroll);
+          // document.removeEventListener('touchmove', handleTouchMove);
+          // document.removeEventListener('scroll', preventAllScroll);
+          
+          // if (window.parent && window.parent !== window) {
+          //   window.removeEventListener('wheel', preventAllScroll);
+          // }
+        };
+      }, []);
+      
+      // currentStep이 변경될 때 입력창 텍스트 업데이트
+      useEffect(() => {
+        if (currentStep < ALL_CONVERSATION_DATA.length && !isProcessing) {
+          setInputText(ALL_CONVERSATION_DATA[currentStep].userMessage.content);
+        }
+      }, [currentStep, isProcessing]);
+      
+      // 사용자 메시지 처리하고 응답 시작
+      const handleUserMessage = (scenarioIndex) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+        
+        // 입력창 비우기
+        setInputText("");
+        
+        const scenarioData = ALL_CONVERSATION_DATA[scenarioIndex];
+        if (!scenarioData) return;
+        
+        // 사용자 메시지 추가
+        const userMessage = scenarioData.userMessage;
+        
+        // 첫 번째 단계면 이전 메시지 모두 지우고 시작
+        if (scenarioIndex === 0) {
+          setMessages([userMessage]);
+        } else {
+          setMessages(prev => [...prev, userMessage]);
+        }
+        
+        // 응답 처리 시작 - 딜레이 없이 즉시 진행
+        processResponses(scenarioData.aimoResponses, 0, scenarioIndex);
+      };
+      
+      // 응답 메시지 순차적으로 처리 - 로딩 표시기는 제거하되 딜레이는 유지
+      const processResponses = (responses, responseIndex, scenarioIndex) => {
+        if (responseIndex >= responses.length) {
+          setIsProcessing(false);
+          if (scenarioIndex + 1 < ALL_CONVERSATION_DATA.length) {
+            const nextIndex = scenarioIndex + 1;
+            setCurrentStep(nextIndex);
+            // auto-send next user message after a short delay
+            setTimeout(() => {
+              handleUserMessage(nextIndex);
+            }, 1000);
+          } else {
+            setIsCompleted(true);
+          }
+          return;
+        }
+        
+        // 각 응답 메시지를 일정 간격으로 표시
+        setTimeout(() => {
+          const response = responses[responseIndex];
+          setMessages(prev => [...prev, response]);
+          
+          // 다음 응답 처리
+          processResponses(responses, responseIndex + 1, scenarioIndex);
+          
+        }, 1200); // 메시지 표시 간격 조정
+      };
+      
+      // 대화 재설정
+      const resetConversation = () => {
+        setMessages([]);
+        setIsCompleted(false);
+        setIsProcessing(false);
+        setCurrentStep(0);
+        setIsDemoStarted(false);
+        
+        // 첫 번째 메시지 텍스트로 입력창 초기화
+        if (ALL_CONVERSATION_DATA.length > 0) {
+          setInputText(ALL_CONVERSATION_DATA[0].userMessage.content);
+        }
+      };
+      
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <div 
+            id="message-container"
+            ref={messageContainerRef}
+            style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '15px', position: 'relative' }}
+          >
+            {messages.map((message, index) => {
+              if (message.type === 'portfolio') {
                 return (
-                    <div
-                        style={{
-                            maxWidth: "80%",
-                            width: "auto",
-                            alignSelf: isUser ? "flex-end" : "flex-start",
-                            backgroundColor: isReasoning
-                                ? "transparent"
-                                : isUser
-                                  ? "var(--user-bubble)"
-                                  : "transparent",
-                            padding: isReasoning ? "8px" : "14px",
-                            borderRadius: "10px",
-                            marginBottom: "12px",
-                            border: isReasoning ? "none" : "1px solid",
-                            borderColor: isUser
-                                ? "rgba(232, 232, 232, 0.1)"
-                                : "var(--agent-bubble-border)",
-                            boxShadow: isReasoning
-                                ? "none"
-                                : isUser
-                                  ? "0 2px 4px rgba(0, 0, 0, 0.1)"
-                                  : "none",
-                            animation: "fadeIn 0.3s ease forwards",
-                            wordBreak: "break-word",
-                            overflowWrap: "break-word",
-                        }}
-                    >
-                        <div
-                            style={{
-                                fontSize: "11px",
-                                fontWeight: "500",
-                                marginBottom: "4px",
-                                color: isUser
-                                    ? "var(--text-secondary)"
-                                    : isReasoning
-                                      ? "var(--reasoning-color)"
-                                      : "var(--text-secondary)",
-                                textAlign: isUser ? "right" : "left",
-                            }}
-                        >
-                            {label}
-                        </div>
-
-                        {/* 메모리 업데이트 표시 - 대사 앞에 표시 */}
-                        {!isUser && showMemoryUpdate && (
-                            <div className="memory-indicator">
-                                <svg
-                                    width="10"
-                                    height="10"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M13.3334 4.66667L6.00002 12L2.66669 8.66667"
-                                        stroke="currentColor"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                                Memory updated
-                            </div>
-                        )}
-
-                        <div
-                            style={{
-                                whiteSpace: "pre-wrap",
-                                fontStyle: isReasoning ? "italic" : "normal",
-                                color: isReasoning
-                                    ? "var(--reasoning-color)"
-                                    : "var(--text-primary)",
-                                lineHeight: "1.5",
-                                fontSize: "14px",
-                                fontWeight: "400",
-                            }}
-                        >
-                            {children}
-                        </div>
-                    </div>
+                  <div key={`portfolio-${index}`} style={{ width: '100%', minHeight: '500px', marginBottom: '10px' }}>
+                    <PortfolioPreview isVisible={true} />
+                  </div>
                 );
-            };
+              }
+              
+              return (
+                <Message 
+                  key={`message-${index}`} 
+                  isUser={message.type === 'user'} 
+                  isReasoning={message.type === 'reasoning'} 
+                  label={message.label}
+                  showMemoryUpdate={message.showMemoryUpdate}
+                >
+                  {message.content}
+                </Message>
+              );
+            })}
+            
+            <div ref={messagesEndRef} style={{ height: '40px' }} />
+          </div>
 
-            // Asset card component
-            const AssetCard = ({ asset, icon, amount, value, change }) => {
-                const isPositive = change > 0;
+          {/* Demo Start fixed overlay */}
+          {!isDemoStarted && messages.length === 0 && (
+            <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%, -50%)', zIndex:1000 }}>
+              <button
+                onClick={() => { setIsDemoStarted(true); handleUserMessage(0); }}
+                className="retry-button"
+              >
+                Demo Start
+              </button>
+            </div>
+          )}
 
-                return (
-                    <div
-                        style={{
-                            backgroundColor: "var(--secondary-bg)",
-                            borderRadius: "8px",
-                            padding: "12px",
-                            border: "1px solid rgba(232, 232, 232, 0.05)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                marginBottom: "6px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: "26px",
-                                    height: "26px",
-                                    borderRadius: "50%",
-                                    background: "var(--secondary-bg)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    marginRight: "8px",
-                                    fontWeight: "500",
-                                    color: "var(--text-primary)",
-                                    border: "1px solid rgba(232, 232, 232, 0.2)",
-                                    fontSize: "11px",
-                                }}
-                            >
-                                {icon}
-                            </div>
-                            <div
-                                style={{
-                                    fontWeight: "500",
-                                    color: "var(--text-primary)",
-                                    fontSize: "14px",
-                                }}
-                            >
-                                {asset}
-                            </div>
-                        </div>
+          {/* New Messages fixed overlay above input area */}
+          {hasNewMessages && (
+            <div style={{ position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%)', zIndex:1000 }}>
+              <button
+                onClick={() => { scrollToBottom(); setHasNewMessages(false); }}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--send-button)',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                New Messages
+              </button>
+            </div>
+          )}
 
-                        <div
-                            style={{
-                                fontSize: "15px",
-                                fontWeight: "500",
-                                marginBottom: "2px",
-                                color: "var(--text-primary)",
-                            }}
-                        >
-                            {amount}
-                        </div>
-
-                        <div
-                            style={{
-                                fontSize: "12px",
-                                color: "var(--text-secondary)",
-                                marginBottom: "6px",
-                            }}
-                        >
-                            {value}
-                        </div>
-
-                        <div
-                            style={{
-                                display: "inline-block",
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                                fontSize: "11px",
-                                fontWeight: "400",
-                                backgroundColor: isPositive
-                                    ? "rgba(74, 222, 128, 0.1)"
-                                    : "rgba(248, 113, 113, 0.1)",
-                                color: isPositive
-                                    ? "var(--positive-color)"
-                                    : "var(--negative-color)",
-                            }}
-                        >
-                            {isPositive ? "+" : ""}
-                            {change}%
-                        </div>
-                    </div>
-                );
-            };
-
-            // Chart component
-            const PerformanceChart = () => {
-                const data = [60, 75, 45, 65, 80, 70, 85];
-                const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-                return (
-                    <div style={{ marginTop: "20px" }}>
-                        <div
-                            style={{
-                                fontSize: "13px",
-                                fontWeight: "500",
-                                marginBottom: "10px",
-                                color: "var(--text-primary)",
-                            }}
-                        >
-                            Weekly Performance
-                        </div>
-                        <div
-                            style={{
-                                height: "120px",
-                                display: "flex",
-                                alignItems: "flex-end",
-                                position: "relative",
-                                gap: "12px",
-                                marginBottom: "25px",
-                            }}
-                        >
-                            {data.map((value, index) => (
-                                <div
-                                    key={index}
-                                    style={{
-                                        flex: 1,
-                                        position: "relative",
-                                        height: "120px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "flex-end",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            height: `${value}%`,
-                                            background: "var(--chart-color)",
-                                            borderRadius: "1px",
-                                            opacity: 0.5,
-                                            width: "100%",
-                                            maxWidth: "14px",
-                                            margin: "0 auto",
-                                        }}
-                                    ></div>
-                                    <div
-                                        style={{
-                                            position: "absolute",
-                                            bottom: "-20px",
-                                            left: 0,
-                                            right: 0,
-                                            fontSize: "10px",
-                                            color: "var(--text-secondary)",
-                                            textAlign: "center",
-                                        }}
-                                    >
-                                        {days[index]}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            // Portfolio preview component
-            const PortfolioPreview = ({ isVisible }) => {
-                if (!isVisible) return null;
-
-                return (
-                    <div
-                        style={{
-                            backgroundColor: "var(--card-bg)",
-                            borderRadius: "12px",
-                            padding: "16px",
-                            marginBottom: "20px",
-                            border: "1px solid var(--border-color)",
-                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
-                            animation: "fadeIn 0.5s ease",
-                            display: "block",
-                            width: "100%",
-                            maxWidth: "100%",
-                            overflowX: "hidden",
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "14px",
-                                flexWrap: "wrap",
-                                gap: "6px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontSize: "16px",
-                                    fontWeight: "500",
-                                    color: "var(--text-primary)",
-                                }}
-                            >
-                                Weekly Crypto Portfolio Report
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: "11px",
-                                    padding: "4px 8px",
-                                    borderRadius: "6px",
-                                    backgroundColor: "var(--secondary-bg)",
-                                    color: "var(--text-secondary)",
-                                }}
-                            >
-                                Monday, July 29, 2023 - 09:00 UTC
-                            </div>
-                        </div>
-
-                        <div
-                            style={{
-                                height: "1px",
-                                backgroundColor: "var(--border-color)",
-                                marginBottom: "16px",
-                                opacity: 0.5,
-                            }}
-                        ></div>
-
-                        <div
-                            style={{
-                                display: "grid",
-                                gridTemplateColumns:
-                                    "repeat(auto-fill, minmax(160px, 1fr))",
-                                gap: "10px",
-                                marginBottom: "16px",
-                            }}
-                        >
-                            <AssetCard
-                                asset="Bitcoin"
-                                icon="BTC"
-                                amount="1.245 BTC"
-                                value="$39,840.25"
-                                change={5.2}
-                            />
-                            <AssetCard
-                                asset="Ethereum"
-                                icon="ETH"
-                                amount="12.5 ETH"
-                                value="$21,375.00"
-                                change={3.8}
-                            />
-                            <AssetCard
-                                asset="Solana"
-                                icon="SOL"
-                                amount="145 SOL"
-                                value="$8,700.00"
-                                change={-2.1}
-                            />
-                            <AssetCard
-                                asset="Polkadot"
-                                icon="DOT"
-                                amount="320 DOT"
-                                value="$1,920.00"
-                                change={1.4}
-                            />
-                        </div>
-
-                        <PerformanceChart />
-
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                backgroundColor: "var(--secondary-bg)",
-                                padding: "14px",
-                                borderRadius: "8px",
-                                marginTop: "16px",
-                                border: "1px solid rgba(232, 232, 232, 0.05)",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: "500",
-                                    color: "var(--text-primary)",
-                                    fontSize: "14px",
-                                }}
-                            >
-                                Total Portfolio Value
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: "16px",
-                                    fontWeight: "500",
-                                    color: "var(--text-primary)",
-                                }}
-                            >
-                                $71,835.25
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            // 전체 대화 시나리오 정의 (변경되지 않음)
-            const ALL_CONVERSATION_DATA = [
-                // 첫 번째 사용자 입력과 아이모 응답들
-                {
-                    userMessage: {
-                        type: "user",
-                        label: "Me",
-                        content:
-                            "Send me a weekly report of all my crypto assets every Monday at 9 AM.",
-                    },
-                    aimoResponses: [
-                        {
-                            type: "reasoning",
-                            label: "Aimo Reasoning",
-                            content:
-                                "To accomplish this, I need to:\n- Set a scheduler to run every Monday at 09:00\n- Collect trade logs, holdings, and PnL stats\n- Summarize the data into a report\n- Send the report via Gmail",
-                        },
-                        {
-                            type: "agent",
-                            label: "Aimo",
-                            content:
-                                "Got it! Let's start by scheduling this to run every Monday at 9 AM.",
-                            showMemoryUpdate: true,
-                        },
-                        {
-                            type: "reasoning",
-                            label: "Aimo Reasoning",
-                            content:
-                                "Next, I'll need to fetch your portfolio data using:\n- Trades Tool\n- Inventory Tool\n- Invest Stats Tool",
-                        },
-                        {
-                            type: "agent",
-                            label: "Aimo",
-                            content:
-                                "Connecting Trades Tool, Inventory Tool, and Invest Stats Tool to collect the necessary data.",
-                        },
-                        {
-                            type: "reasoning",
-                            label: "Aimo Reasoning",
-                            content:
-                                "Now I need a way to summarize this into a clean weekly report...",
-                        },
-                        {
-                            type: "agent",
-                            label: "Aimo",
-                            content:
-                                "Adding Report Generator Agent. It'll compile your trades, asset inventory, and PnL stats into a markdown summary.",
-                        },
-                        {
-                            type: "reasoning",
-                            label: "Aimo Reasoning",
-                            content:
-                                "Finally, the user wants this report delivered via email.",
-                        },
-                        {
-                            type: "agent",
-                            label: "Aimo",
-                            content:
-                                "Connecting Gmail Tool to deliver the report. I'll prefill the subject and attach the summary.",
-                        },
-                    ],
-                },
-                // 두 번째 사용자 입력과 아이모 응답들
-                {
-                    userMessage: {
-                        type: "user",
-                        label: "Me",
-                        content:
-                            "Perfect. Can you send me a preview of this week's report?",
-                    },
-                    aimoResponses: [
-                        {
-                            type: "agent",
-                            label: "Aimo",
-                            content:
-                                "Sure! I've just sent your first report as of 09:00 UTC today. Check your Gmail inbox for the summary.",
-                        },
-                        { type: "portfolio" },
-                    ],
-                },
-            ];
-
-            // Main App component
-            const App = () => {
-                // 메시지 리스트와 대화 완료 상태만 관리
-                const [messages, setMessages] = useState([]);
-                const [isCompleted, setIsCompleted] = useState(false);
-                const [isProcessing, setIsProcessing] = useState(false);
-                const [currentStep, setCurrentStep] = useState(0);
-                const [inputText, setInputText] = useState(""); // 입력창 텍스트 상태 추가
-                const [hasNewMessages, setHasNewMessages] = useState(false);
-                const [isBottomVisible, setIsBottomVisible] = useState(true);
-                const [isDemoStarted, setIsDemoStarted] = useState(false);
-                const messagesEndRef = useRef(null);
-                const prevCountRef = useRef(0);
-                const messageContainerRef = useRef(null);
-
-                // observer로 하단 요소 감지
-                useEffect(() => {
-                    const observer = new IntersectionObserver(
-                        ([entry]) => {
-                            setIsBottomVisible(entry.isIntersecting);
-                            if (entry.isIntersecting) {
-                                setHasNewMessages(false);
-                            }
-                        },
-                        { root: messageContainerRef.current, threshold: 1.0 },
-                    );
-                    if (messagesEndRef.current) {
-                        observer.observe(messagesEndRef.current);
-                    }
-                    return () => observer.disconnect();
-                }, []);
-
-                // 자동 스크롤 함수
-                const scrollToBottom = () => {
-                    if (messagesEndRef.current) {
-                        messagesEndRef.current.scrollIntoView({
-                            behavior: "smooth",
-                            block: "end",
-                        });
-                    }
-                };
-
-                // 새 메시지 감지하여 New Messages 오버레이 토글
-                useEffect(() => {
-                    if (
-                        messages.length > prevCountRef.current &&
-                        !isBottomVisible
-                    ) {
-                        setHasNewMessages(true);
-                    }
-                    prevCountRef.current = messages.length;
-                }, [messages, isBottomVisible]);
-
-                // 처음 화면이 로드될 때 상태 초기화
-                useEffect(() => {
-                    resetConversation();
-
-                    // 모든 스크롤 이벤트를 차단하는 함수
-                    const preventAllScroll = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    };
-
-                    // 메시지 컨테이너 내부에서만 스크롤 허용하는 함수
-                    const allowContainerScroll = (e) => {
-                        // 이벤트가 발생한 요소가 메시지 컨테이너 내부인지 확인
-                        let targetElement = e.target;
-                        let isInsideContainer = false;
-
-                        while (targetElement != null) {
-                            if (targetElement.id === "message-container") {
-                                isInsideContainer = true;
-                                break;
-                            }
-                            targetElement = targetElement.parentElement;
-                        }
-
-                        // 메시지 컨테이너 외부에서 발생한 스크롤은 차단
-                        if (!isInsideContainer) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    };
-
-                    // 터치 이벤트 처리
-                    const handleTouchMove = (e) => {
-                        let targetElement = e.target;
-                        let isInsideContainer = false;
-
-                        while (targetElement != null) {
-                            if (targetElement.id === "message-container") {
-                                isInsideContainer = true;
-                                break;
-                            }
-                            targetElement = targetElement.parentElement;
-                        }
-
-                        if (!isInsideContainer) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    };
-
-                    // 문서 전체에 스크롤 이벤트 리스너 추가
-                    document.addEventListener("wheel", allowContainerScroll, {
-                        passive: false,
-                    });
-                    document.addEventListener("touchmove", handleTouchMove, {
-                        passive: false,
-                    });
-                    document.addEventListener("scroll", preventAllScroll, {
-                        passive: false,
-                    });
-
-                    // iframe 내부에서 최상위 스크롤 차단
-                    if (window.parent && window.parent !== window) {
-                        window.addEventListener("wheel", preventAllScroll, {
-                            passive: false,
-                        });
-                    }
-
-                    return () => {
-                        document.removeEventListener(
-                            "wheel",
-                            allowContainerScroll,
-                        );
-                        document.removeEventListener(
-                            "touchmove",
-                            handleTouchMove,
-                        );
-                        document.removeEventListener(
-                            "scroll",
-                            preventAllScroll,
-                        );
-
-                        if (window.parent && window.parent !== window) {
-                            window.removeEventListener(
-                                "wheel",
-                                preventAllScroll,
-                            );
-                        }
-                    };
-                }, []);
-
-                // currentStep이 변경될 때 입력창 텍스트 업데이트
-                useEffect(() => {
-                    if (
-                        currentStep < ALL_CONVERSATION_DATA.length &&
-                        !isProcessing
-                    ) {
-                        setInputText(
-                            ALL_CONVERSATION_DATA[currentStep].userMessage
-                                .content,
-                        );
-                    }
-                }, [currentStep, isProcessing]);
-
-                // 사용자 메시지 처리하고 응답 시작
-                const handleUserMessage = (scenarioIndex) => {
-                    if (isProcessing) return;
-                    setIsProcessing(true);
-
-                    // 입력창 비우기
-                    setInputText("");
-
-                    const scenarioData = ALL_CONVERSATION_DATA[scenarioIndex];
-                    if (!scenarioData) return;
-
-                    // 사용자 메시지 추가
-                    const userMessage = scenarioData.userMessage;
-
-                    // 첫 번째 단계면 이전 메시지 모두 지우고 시작
-                    if (scenarioIndex === 0) {
-                        setMessages([userMessage]);
-                    } else {
-                        setMessages((prev) => [...prev, userMessage]);
-                    }
-
-                    // 응답 처리 시작 - 딜레이 없이 즉시 진행
-                    processResponses(
-                        scenarioData.aimoResponses,
-                        0,
-                        scenarioIndex,
-                    );
-                };
-
-                // 응답 메시지 순차적으로 처리 - 로딩 표시기는 제거하되 딜레이는 유지
-                const processResponses = (
-                    responses,
-                    responseIndex,
-                    scenarioIndex,
-                ) => {
-                    if (responseIndex >= responses.length) {
-                        setIsProcessing(false);
-                        if (scenarioIndex + 1 < ALL_CONVERSATION_DATA.length) {
-                            const nextIndex = scenarioIndex + 1;
-                            setCurrentStep(nextIndex);
-                            // auto-send next user message after a short delay
-                            setTimeout(() => {
-                                handleUserMessage(nextIndex);
-                            }, 1000);
-                        } else {
-                            setIsCompleted(true);
-                        }
-                        return;
-                    }
-
-                    // 각 응답 메시지를 일정 간격으로 표시
-                    setTimeout(() => {
-                        const response = responses[responseIndex];
-                        setMessages((prev) => [...prev, response]);
-
-                        // 다음 응답 처리
-                        processResponses(
-                            responses,
-                            responseIndex + 1,
-                            scenarioIndex,
-                        );
-                    }, 2000); // 메시지 표시 간격 조정
-                };
-
-                // 대화 재설정
-                const resetConversation = () => {
-                    setMessages([]);
-                    setIsCompleted(false);
-                    setIsProcessing(false);
-                    setCurrentStep(0);
-                    setIsDemoStarted(false);
-
-                    // 첫 번째 메시지 텍스트로 입력창 초기화
-                    if (ALL_CONVERSATION_DATA.length > 0) {
-                        setInputText(
-                            ALL_CONVERSATION_DATA[0].userMessage.content,
-                        );
-                    }
-                };
-
-                return (
-                    <div
-                        style={{
-                            position: "relative",
-                            width: "100%",
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                        }}
-                    >
-                        <div
-                            id="message-container"
-                            ref={messageContainerRef}
-                            style={{
-                                flex: 1,
-                                overflowY: "auto",
-                                overflowX: "hidden",
-                                padding: "15px",
-                                position: "relative",
-                            }}
-                        >
-                            {messages.map((message, index) => {
-                                if (message.type === "portfolio") {
-                                    return (
-                                        <div
-                                            key={`portfolio-${index}`}
-                                            style={{
-                                                width: "100%",
-                                                minHeight: "500px",
-                                                marginBottom: "10px",
-                                            }}
-                                        >
-                                            <PortfolioPreview
-                                                isVisible={true}
-                                            />
-                                        </div>
-                                    );
-                                }
-
-                                return (
-                                    <Message
-                                        key={`message-${index}`}
-                                        isUser={message.type === "user"}
-                                        isReasoning={
-                                            message.type === "reasoning"
-                                        }
-                                        label={message.label}
-                                        showMemoryUpdate={
-                                            message.showMemoryUpdate
-                                        }
-                                    >
-                                        {message.content}
-                                    </Message>
-                                );
-                            })}
-
-                            <div
-                                ref={messagesEndRef}
-                                style={{ height: "40px" }}
-                            />
-                        </div>
-
-                        {/* Demo Start fixed overlay */}
-                        {!isDemoStarted && messages.length === 0 && (
-                            <div
-                                style={{
-                                    position: "fixed",
-                                    top: "50%",
-                                    left: "50%",
-                                    transform: "translate(-50%, -50%)",
-                                    zIndex: 1000,
-                                }}
-                            >
-                                <button
-                                    onClick={() => {
-                                        setIsDemoStarted(true);
-                                        handleUserMessage(0);
-                                    }}
-                                    className="retry-button"
-                                >
-                                    Demo Start
-                                </button>
-                            </div>
-                        )}
-
-                        {/* New Messages fixed overlay above input area */}
-                        {hasNewMessages && (
-                            <div
-                                style={{
-                                    position: "fixed",
-                                    bottom: "90px",
-                                    left: "50%",
-                                    transform: "translateX(-50%)",
-                                    zIndex: 1000,
-                                }}
-                            >
-                                <button
-                                    onClick={() => {
-                                        scrollToBottom();
-                                        setHasNewMessages(false);
-                                    }}
-                                    style={{
-                                        padding: "4px 12px",
-                                        fontSize: "12px",
-                                        borderRadius: "6px",
-                                        backgroundColor: "var(--send-button)",
-                                        color: "var(--text-primary)",
-                                        border: "none",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    New Messages
-                                </button>
-                            </div>
-                        )}
-
-                        {/* 입력 폼 또는 재시작 버튼: 항상 하단 고정 영역 */}
-                        <div id="input-area">
-                            {isCompleted ? (
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    <button
-                                        onClick={resetConversation}
-                                        className="retry-button"
-                                    >
-                                        Retry
-                                    </button>
-                                </div>
-                            ) : (
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        handleUserMessage(currentStep);
-                                    }}
-                                    className="input-form"
-                                >
-                                    <input
-                                        type="text"
-                                        value={inputText}
-                                        readOnly={true}
-                                        className="text-input"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={isProcessing}
-                                        className="send-button"
-                                        style={{
-                                            opacity: isProcessing ? 0.6 : 1,
-                                        }}
-                                    >
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                d="M22 2L11 13"
-                                                stroke="white"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                            <path
-                                                d="M22 2L15 22L11 13L2 9L22 2Z"
-                                                stroke="white"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                        </svg>
-                                    </button>
-                                </form>
-                            )}
-                        </div>
-                    </div>
-                );
-            };
-
-            // Render the App
-            const rootElement = document.getElementById("root");
-            ReactDOM.render(<App />, rootElement);
-        </script>
-    </body>
+          {/* 입력 폼 또는 재시작 버튼: 항상 하단 고정 영역 */}
+          <div id="input-area">
+            {isCompleted ? (
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={resetConversation}
+                  className="retry-button"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUserMessage(currentStep);
+                }}
+                className="input-form"
+              >
+                <input
+                  type="text"
+                  value={inputText}
+                  readOnly={true}
+                  className="text-input"
+                />
+                <button
+                  type="submit"
+                  disabled={isProcessing}
+                  className="send-button"
+                  style={{ opacity: isProcessing ? 0.6 : 1 }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 2L11 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      );
+    };
+    
+    // Render the App
+    const rootElement = document.getElementById('root');
+    ReactDOM.render(<App />, rootElement);
+  </script>
+</body>
 </html>
